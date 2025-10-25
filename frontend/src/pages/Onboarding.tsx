@@ -346,8 +346,8 @@ export function Onboarding() {
                     
                     {/* Social Icons */}
                     {selectedPlatforms.length > 0 && (
-                      <div className="flex justify-center gap-3 mb-6">
-                        {selectedPlatforms.slice(0, 2).map((platformId) => {
+                      <div className="flex justify-center gap-3 mb-6 flex-wrap">
+                        {selectedPlatforms.map((platformId) => {
                           const platform = PLATFORMS.find(p => p.id === platformId);
                           if (!platform) return null;
                           const Icon = platform.icon;
@@ -367,7 +367,7 @@ export function Onboarding() {
 
                   {/* Link Preview */}
                   <div className="space-y-3">
-                    {selectedPlatforms.slice(0, 1).map((platformId) => {
+                    {selectedPlatforms.map((platformId) => {
                       const platform = PLATFORMS.find(p => p.id === platformId);
                       if (!platform) return null;
                       const Icon = platform.icon;
