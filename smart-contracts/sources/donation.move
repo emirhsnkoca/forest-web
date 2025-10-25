@@ -56,7 +56,7 @@ module forest::donation {
             profile::owner(profile)
         };
         
-        // Coin'i recipient'e transfer et (direkt transfer, escrow yok!)
+         // Coin'i recipient'e transfer et (direkt transfer, escrow yok!)
         transfer::public_transfer(payment, recipient);
         
         // Event emit et
