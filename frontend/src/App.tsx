@@ -29,7 +29,7 @@ function App() {
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/profile/:address" element={<Profile />} />
-                <Route path="/admin" element={<Admin />} />
+                                <Route path="/admin" element={<Admin />} />
                 <Route path="/upgrade" element={<Upgrade />} />
               </Routes>
             </Router>
