@@ -5,9 +5,10 @@ interface ModalProps {
   onClose: () => void;
   children: ReactNode;
   title?: string;
+  size?: 'small' | 'medium' | 'large';
 }
 
-export function Modal({ isOpen, onClose, children, title }: ModalProps) {
+export function Modal({ isOpen, onClose, children, title, size = 'medium' }: ModalProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -30,7 +31,11 @@ export function Modal({ isOpen, onClose, children, title }: ModalProps) {
       />
       
       {/* Modal Content */}
-      <div className="relative bg-white rounded-2xl p-8 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className={`relative bg-white rounded-2xl p-8 w-full mx-4 max-h-[90vh] overflow-y-auto ${
+        size === 'small' ? 'max-w-sm' : 
+        size === 'large' ? 'max-w-4xl' : 
+        'max-w-md'
+      }`}>
         {title && (
           <h2 className="text-2xl font-bold mb-6 text-center">{title}</h2>
         )}
