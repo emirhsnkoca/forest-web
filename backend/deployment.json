@@ -1,0 +1,24 @@
+{
+  "network": "testnet",
+  "package_id": "0x98d4dbe394406ea9b7a842007a59b499fd4723728081e37289ef71d82ebfcf89",
+  "upgrade_cap_id": "0xaf7fa28cebd641dd9b223a8174143a60422da3ed2506f19bf8385c7ae5e5c693",
+  "transaction_digest": "n721KBJpKohpfKfAZvb3Tx7TKJM8fYd9DeRCsrBS2LT",
+  "deployed_at": "2025-01-25",
+  "deployed_by": "0x8ee5b227366d5839630a96ebd4e73f68d554fc2f5977b92ac3a1dad825d85011",
+  "modules": {
+    "linktree": {
+      "functions": [
+        "create_profile",
+        "add_link"
+      ],
+      "events": [
+        "ProfileCreated",
+        "LinkAdded"
+      ]
+    }
+  },
+  "explorer_links": {
+    "package": "https://suiscan.xyz/testnet/object/0x98d4dbe394406ea9b7a842007a59b499fd4723728081e37289ef71d82ebfcf89",
+    "transaction": "https://suiscan.xyz/testnet/tx/n721KBJpKohpfKfAZvb3Tx7TKJM8fYd9DeRCsrBS2LT"
+  }
+}

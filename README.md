@@ -1,153 +1,97 @@
-# 🌲 Forest - Web3 Link Hub
+# Forest Web - Blockchain Linktree Application
 
-Modern, blockchain-tabanlı bir Linktree alternatifi. Sui blockchain üzerinde çalışır ve kullanıcıların sosyal medya linklerini, NFT koleksiyonlarını ve bağış butonlarını tek bir yerde toplamasını sağlar.
+A decentralized Linktree-like application built with Sui blockchain and React.
 
-## 🚀 Özellikler
-
-### Mevcut Özellikler (MVP)
-- ✅ Sui Wallet entegrasyonu
-- ✅ Özelleştirilebilir profil (isim, bio, profil resmi)
-- ✅ Sınırsız link ekleme
-- ✅ Sosyal medya linkleri
-- ✅ Public profil sayfası
-- ✅ Link yönetimi (ekle, düzenle, sil, aktif/pasif)
-- ✅ Responsive tasarım
-- ✅ Clean, modern UI
-
-### Gelecek Özellikler
-- 🔜 ZK Login (Google ile giriş)
-- 🔜 Sui Name Service entegrasyonu
-- 🔜 NFT koleksiyonu gösterimi
-- 🔜 Bağış butonu (SUI ile)
-- 🔜 Move smart contract'lar (onchain veri)
-- 🔜 Subdomain routing
-- 🔜 Analytics ve insights
-- 🔜 Custom tema editörü
-- 🔜 Walrus storage entegrasyonu
-
-## 🛠️ Teknoloji Stack
-
-**Frontend:**
-- React 18
-- TypeScript
-- Vite
-- Tailwind CSS
-- React Router
-- @mysten/dapp-kit (Sui wallet integration)
-- @mysten/sui (Sui blockchain SDK)
-
-**Blockchain:**
-- Sui Network (Testnet)
-- Move (smart contracts - gelecekte)
-
-**Storage:**
-- LocalStorage (MVP)
-- Walrus (gelecekte)
-
-## 📁 Proje Yapısı
+## Project Structure
 
 ```
 forest-web/
-├── frontend/              # React frontend uygulaması
+├── backend/                 # Smart contracts (Move)
+│   ├── sources/
+│   │   └── linktree.move   # Main smart contract
+│   ├── tests/              # Move tests
+│   ├── build/              # Compiled contracts
+│   ├── Move.toml           # Move package configuration
+│   └── deployment.json     # Deployment configuration
+├── frontend/               # React + Vite frontend
 │   ├── src/
-│   │   ├── components/   # React component'leri
-│   │   ├── pages/        # Page component'leri
-│   │   ├── hooks/        # Custom React hooks
-│   │   ├── contexts/     # React contexts
-│   │   ├── types/        # TypeScript type definitions
-│   │   ├── constants/    # Sabitler
-│   │   └── utils/        # Yardımcı fonksiyonlar
-│   └── ...
-├── smart-contracts/       # Move smart contracts (gelecek)
+│   │   ├── forest.ts       # Blockchain integration layer
+│   │   ├── components/     # React components
+│   │   ├── pages/          # Page components
+│   │   └── types/          # TypeScript types
+│   ├── package.json        # Frontend dependencies
+│   └── vite.config.ts      # Vite configuration
 └── README.md
 ```
 
-## 🚦 Kurulum ve Çalıştırma
+## Features
 
-### Gereksinimler
-- Node.js 18+
-- npm veya yarn
-- Sui Wallet (Sui Wallet extension)
+- **Decentralized Profiles**: Create and manage profiles on Sui blockchain
+- **Link Management**: Add, edit, and organize links
+- **Real-time Events**: Listen to blockchain events for live updates
+- **Modern UI**: Built with React, TypeScript, and Tailwind CSS
 
-### Kurulum
+## Prerequisites
 
-1. Repository'yi klonlayın:
+- Node.js (v18 or higher)
+- Sui CLI (installed)
+- Move CLI (via Sui)
+
+## Installation
+
+### Backend (Smart Contracts)
+
 ```bash
-git clone <repo-url>
-cd forest-web
+cd backend
+sui move build
+sui move test
 ```
 
-2. Frontend bağımlılıklarını yükleyin:
+### Frontend
+
 ```bash
 cd frontend
 npm install
-```
-
-3. Development server'ı başlatın:
-```bash
 npm run dev
 ```
 
-4. Tarayıcınızda `http://localhost:5173` adresine gidin
+## Smart Contract Functions
 
-### Build
+- `create_profile`: Create a new user profile
+- `add_link`: Add a link to a profile
+- `get_owner`: Get profile owner
+- `get_display_name`: Get profile display name
+- `get_bio`: Get profile bio
+- `get_image_url`: Get profile image URL
 
-Production build oluşturmak için:
-```bash
-cd frontend
-npm run build
+## Frontend Integration
+
+The `forest.ts` file provides a clean interface to interact with the smart contract:
+
+```typescript
+import { Forest } from './forest';
+
+const forest = new Forest();
+
+// Create a profile
+await forest.createProfile(displayName, bio, imageUrl, signer);
+
+// Add a link
+await forest.addLink(profileId, title, url, isActive, signer);
+
+// Listen for events
+await forest.listenForProfileCreated((event) => {
+  console.log('Profile created:', event);
+});
 ```
 
-## 📖 Kullanım
+## Development
 
-1. **Wallet Bağlama**: Landing page'de "Sign In" butonuna tıklayın ve Sui wallet'ınızı bağlayın
-2. **Profil Oluşturma**: İsminizi, bio'nuzu ve linklerinizi ekleyin
-3. **Link Yönetimi**: Dashboard'dan linklerinizi ekleyin, düzenleyin veya silin
-4. **Profil Paylaşımı**: Profil URL'inizi kopyalayıp paylaşın
+1. Deploy the smart contract to Sui testnet
+2. Update the `PACKAGE_ID` in `forest.ts`
+3. Start the frontend development server
+4. Connect your Sui wallet and start using the app
 
-## 🎯 Geliştirme Planı
-
-### Phase 1: MVP (✅ Tamamlandı)
-- Temel frontend
-- Wallet connection
-- Profil oluşturma
-- Link yönetimi
-- LocalStorage kullanımı
-
-### Phase 2: Web3 Features (🔄 Devam Ediyor)
-- ZK Login
-- Sui Name Service
-- NFT showcase
-- Donation button
-
-### Phase 3: Onchain (📅 Planlandı)
-- Move smart contracts
-- Onchain profil yönetimi
-- Walrus storage
-
-### Phase 4: Advanced Features (📅 Planlandı)
-- Analytics
-- Custom themes
-- Subdomain routing
-- QR code generator
-
-## 🤝 Katkıda Bulunma
-
-Bu proje aktif geliştirme aşamasındadır. Katkılarınızı bekliyoruz!
-
-## 📝 Lisans
+## License
 
 MIT
-
-## 🔗 Bağlantılar
-
-- [Sui Documentation](https://docs.sui.io/)
-- [Sui Wallet](https://chrome.google.com/webstore/detail/sui-wallet)
-- [@mysten/dapp-kit](https://sdk.mystenlabs.com/dapp-kit)
-
----
-
-**Not**: Bu proje MVP aşamasındadır. Bazı özellikler henüz geliştirilme aşamasındadır.
-
-
-

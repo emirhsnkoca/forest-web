@@ -8,6 +8,7 @@ import { Textarea } from '../components/common/Textarea';
 import { Background } from '../components/common/Background';
 import Confetti from 'react-confetti';
 import { Link } from '../types';
+import { forest, Forest } from '../forest';
 import { 
   FaInstagram, 
   FaWhatsapp, 
@@ -66,6 +67,7 @@ export function Onboarding() {
   const [platformLinks, setPlatformLinks] = useState<Record<string, string>>({});
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [showConfetti, setShowConfetti] = useState(false);
   const [windowDimensions, setWindowDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
 
@@ -104,32 +106,60 @@ export function Onboarding() {
   const handleBack = () => setCurrentStep(currentStep - 1);
   const handleSkip = () => setCurrentStep(currentStep + 1);
 
-  const handleFinish = () => {
-    const links: Link[] = [];
-
-    Object.entries(platformLinks).forEach(([platform, value]) => {
-      if (value.trim()) {
-        const platformData = PLATFORMS.find(p => p.id === platform);
-        const url = platformData?.urlPrefix ? platformData.urlPrefix + value.replace(/^@/, '') : value;
-        links.push({
-          id: `${platform}-${Date.now()}`,
-          type: 'social',
-          platform,
-          title: platformData?.name || platform,
-          url,
-          isActive: true,
-        });
+  const handleFinish = async () => {
+    try {
+      console.log('Creating profile on blockchain...');
+      
+      // Blockchain'e profil oluştur
+      const result = await forest.createProfile(
+        displayName || 'Anonymous',
+        bio || '',
+        imageUrl || '',
+        Forest.generateKeypair() // Mock signer - gerçek implementasyonda wallet'tan alınacak
+      );
+      
+      console.log('Profile created on blockchain:', result);
+      
+      // Link'leri de blockchain'e ekle
+      const links: Link[] = [];
+      for (const [platform, value] of Object.entries(platformLinks)) {
+        if (value.trim()) {
+          const platformData = PLATFORMS.find(p => p.id === platform);
+          const url = platformData?.urlPrefix ? platformData.urlPrefix + value.replace(/^@/, '') : value;
+          
+          // Blockchain'e link ekle
+          const linkResult = await forest.addLink(
+            result.profileId,
+            platformData?.name || platform,
+            url,
+            true,
+            Forest.generateKeypair() // Mock signer
+          );
+          
+          links.push({
+            id: linkResult.linkId,
+            type: 'social',
+            platform,
+            title: platformData?.name || platform,
+            url,
+            isActive: true,
+          });
+        }
       }
-    });
 
-    saveProfile({
-      displayName: displayName || 'Anonymous',
-      bio: bio || '',
-      profileImage: '',
-      links,
-    });
+      // Local state'i de güncelle
+      saveProfile({
+        displayName: displayName || 'Anonymous',
+        bio: bio || '',
+        profileImage: imageUrl || '',
+        links,
+      });
 
-    navigate('/admin');
+      navigate('/admin');
+    } catch (error) {
+      console.error('Error creating profile on blockchain:', error);
+      alert('Error creating profile. Please try again.');
+    }
   };
 
   const progressPercentage = (currentStep / totalSteps) * 100;
@@ -453,6 +483,21 @@ export function Onboarding() {
                         {bio.length}/160
                       </p>
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-primary mb-2">
+                      Profile Image URL
+                    </label>
+                    <Input
+                      placeholder="https://example.com/your-image.jpg"
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      className="!border-2 !border-primary/20 focus:!border-primary"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Optional: Add a link to your profile image
+                    </p>
                   </div>
                 </div>
 

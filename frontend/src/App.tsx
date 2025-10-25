@@ -30,9 +30,8 @@ function App() {
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/profile/:address" element={<Profile />} />
-                                <Route path="/admin" element={<Admin />} />
-                <Route path="/upgrade" element={<Upgrade />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/upgrade" element={<Upgrade />} />
                 <Route path="/account" element={<Account />} />
               </Routes>
             </Router>
