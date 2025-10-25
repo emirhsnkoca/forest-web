@@ -479,40 +479,79 @@ export function Admin() {
           </div>
         </div>
 
-        {/* Right Panel - Mobile Preview */}
-        <div className="w-80 bg-gray-100 p-4">
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-            <div className="bg-gray-200 h-8 flex items-center justify-center">
-              <div className="w-16 h-4 bg-gray-300 rounded"></div>
+        {/* Right Panel - Modern Mobile Preview */}
+        <div className="w-80 bg-gray-50 p-4">
+          <div className="bg-gradient-to-b from-gray-50 to-gray-100 rounded-3xl shadow-2xl overflow-hidden max-w-sm mx-auto">
+            {/* Phone Status Bar */}
+            <div className="bg-black h-6 flex items-center justify-between px-4 text-white text-xs">
+              <span>9:42</span>
+              <div className="flex items-center">
+                {/* Battery Icon */}
+                <div className="relative">
+                  <div className="w-6 h-3 border border-white rounded-sm bg-transparent"></div>
+                  <div className="absolute -right-0.5 top-0.5 w-0.5 h-2 bg-white rounded-r-sm"></div>
+                  <div className="absolute left-0.5 top-0.5 w-4 h-2 bg-white rounded-sm"></div>
+                </div>
+              </div>
             </div>
-            <div className="p-4">
-              <div className="text-center mb-4">
-                <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-2 flex items-center justify-center">
+            
+            {/* Main Content */}
+            <div className="bg-gradient-to-t from-green-600 to-green-200 p-6">
+              {/* Top Menu Icon */}
+              <div className="flex justify-start mb-6">
+                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                  <span className="text-gray-600 text-sm">*</span>
+                </div>
+              </div>
+              
+              {/* Profile Section */}
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-gray-300 rounded-full mx-auto mb-3 flex items-center justify-center shadow-lg">
                   <span className="text-gray-600 text-2xl">👤</span>
                 </div>
-                <h3 className="font-bold text-gray-900">{profileSettings.displayName}</h3>
+                <h2 className="text-lg font-bold text-gray-900 mb-1">@{profileSettings.displayName}</h2>
                 <p className="text-sm text-gray-600">{profileSettings.bio}</p>
               </div>
               
-              <div className="space-y-2 max-h-80 overflow-y-auto">
+              {/* Links Section */}
+              <div className="space-y-2 mb-4">
                 {links.filter(link => link.isActive).map((link) => (
                   <button 
                     key={link.id}
                     onClick={() => window.open(link.url, '_blank')}
-                    className="w-full bg-gray-100 hover:bg-green-50 hover:border-green-200 border border-transparent rounded-lg p-3 text-left transition-all duration-200 hover:shadow-sm"
+                    className="w-full bg-white hover:bg-green-50 border border-gray-200 hover:border-green-300 rounded-2xl p-3 text-left transition-all duration-300 hover:shadow-lg hover:scale-[1.02] group"
                     type="button"
                   >
-                    <div className="flex items-center gap-2">
-                      {link.type === 'wallet' && <span>💰</span>}
-                      {link.type === 'nft' && <span>🖼️</span>}
-                      {link.type === 'defi' && <span>📈</span>}
-                      {link.type === 'social' && <span>📱</span>}
-                      {link.type === 'custom' && <span>🔗</span>}
-                      <span className="font-medium text-gray-900">{link.title}</span>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shadow-sm ${
+                        link.type === 'wallet' ? 'bg-green-100' :
+                        link.type === 'nft' ? 'bg-emerald-100' :
+                        link.type === 'defi' ? 'bg-lime-100' :
+                        link.type === 'social' ? 'bg-teal-100' :
+                        'bg-gray-100'
+                      }`}>
+                        {link.type === 'wallet' && <span className="text-green-600 text-sm">💰</span>}
+                        {link.type === 'nft' && <span className="text-emerald-600 text-sm">🖼️</span>}
+                        {link.type === 'defi' && <span className="text-lime-600 text-sm">📈</span>}
+                        {link.type === 'social' && <span className="text-teal-600 text-sm">📱</span>}
+                        {link.type === 'custom' && <span className="text-gray-600 text-sm">🔗</span>}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-900 text-sm group-hover:text-green-700 transition-colors truncate">
+                          {link.title}
+                        </h3>
+                        <p className="text-xs text-gray-500 truncate">{link.url}</p>
+                      </div>
+                      <div className="text-gray-400 group-hover:text-green-500 transition-colors flex-shrink-0">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
                     </div>
                   </button>
                 ))}
               </div>
+              {/* Footer Links */}
             </div>
           </div>
         </div>
@@ -633,17 +672,17 @@ const SortableLink = React.memo(({ link, onEdit, onDelete, onToggle }: {
       style={style}
       className="group bg-white rounded-xl border border-gray-200 hover:border-green-400 hover:shadow-xl transition-all duration-200 ease-out transform hover:-translate-y-1 hover:scale-[1.02]"
     >
-      {/* Drag Handle */}
-      <div className="flex items-center p-4 pb-0">
+      {/* Drag Handle - Enhanced for better UX */}
+      <div className="flex items-center p-3 pb-0">
         <div 
           {...attributes}
           {...listeners}
-          className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-green-500 cursor-move transition-colors duration-150"
+          className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-green-500 cursor-move transition-all duration-150 hover:bg-green-50 rounded-lg group border border-transparent hover:border-green-200"
         >
           <div className="flex flex-col gap-1">
-            <div className="w-1 h-1 bg-current rounded-full"></div>
-            <div className="w-1 h-1 bg-current rounded-full"></div>
-            <div className="w-1 h-1 bg-current rounded-full"></div>
+            <div className="w-1.5 h-1.5 bg-current rounded-full group-hover:scale-110 transition-transform"></div>
+            <div className="w-1.5 h-1.5 bg-current rounded-full group-hover:scale-110 transition-transform"></div>
+            <div className="w-1.5 h-1.5 bg-current rounded-full group-hover:scale-110 transition-transform"></div>
           </div>
         </div>
       </div>
