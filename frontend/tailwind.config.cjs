@@ -46,6 +46,8 @@ module.exports = {
         'gradient-earth-green': 'linear-gradient(to top, #5C4033 0%, #7D5A3F 40%, #6B9F3D 100%)',
         'pixel-green': `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234A7C25' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
         'pixel-earth': `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%235C4033' fill-opacity='0.4'%3E%3Cpath d='M0 0h20v20H0V0zm10 10h10v10H10V10zM20 20h20v20H20V20zm10 10h10v10H30V30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        'pixel-water': `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%232A7F99' fill-opacity='0.3'%3E%3Cpath d='M0 0h10v10H0V0zm10 10h10v10H10V10zM20 0h10v10H20V0zm10 10h10v10H30V10zM0 20h10v10H0V20zm20 0h10v10H20V20z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        'pixel-grass': `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%236B9F3D' fill-opacity='0.5'%3E%3Cpath d='M0 0h5v5H0V0zm5 5h5v5H5V5zm5-5h5v5h-5V0zm5 5h5v5h-5V5zM0 10h5v5H0v-5zm10 0h5v5h-5v-5zM0 15h20v5H0v-5z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',

@@ -17,9 +17,9 @@ import {
   FaFacebook, 
   FaSnapchat, 
   FaPinterest,
-  FaSoundcloud,
   FaThreads,
-  FaGlobe
+  FaGlobe,
+  FaTelegram
 } from 'react-icons/fa6';
 import { FaXTwitter } from 'react-icons/fa6';
 
@@ -35,18 +35,22 @@ interface Platform {
 }
 
 const PLATFORMS: Platform[] = [
-  { id: 'instagram', name: 'Instagram', icon: FaInstagram, color: '#E4405F', placeholder: '@username', urlPrefix: 'https://instagram.com/' },
-  { id: 'whatsapp', name: 'WhatsApp', icon: FaWhatsapp, color: '#25D366', placeholder: 'Phone number', urlPrefix: 'https://wa.me/' },
-  { id: 'tiktok', name: 'TikTok', icon: FaTiktok, color: '#000000', placeholder: '@username', urlPrefix: 'https://tiktok.com/@' },
-  { id: 'youtube', name: 'YouTube', icon: FaYoutube, color: '#FF0000', placeholder: 'Channel URL', urlPrefix: '' },
-  { id: 'website', name: 'Personal Website', icon: FaGlobe, color: '#000000', placeholder: 'URL', urlPrefix: '' },
-  { id: 'spotify', name: 'Spotify', icon: FaSpotify, color: '#1DB954', placeholder: 'Artist URL', urlPrefix: '' },
-  { id: 'threads', name: 'Threads', icon: FaThreads, color: '#000000', placeholder: '@username', urlPrefix: 'https://threads.net/@' },
-  { id: 'facebook', name: 'Facebook', icon: FaFacebook, color: '#1877F2', placeholder: 'Profile URL', urlPrefix: '' },
+  // Row 1
   { id: 'twitter', name: 'X', icon: FaXTwitter, color: '#000000', placeholder: '@username', urlPrefix: 'https://x.com/' },
-  { id: 'soundcloud', name: 'SoundCloud', icon: FaSoundcloud, color: '#FF5500', placeholder: 'Profile URL', urlPrefix: '' },
-  { id: 'snapchat', name: 'Snapchat', icon: FaSnapchat, color: '#FFFC00', placeholder: '@username', urlPrefix: '' },
+  { id: 'telegram', name: 'Telegram', icon: FaTelegram, color: '#0088CC', placeholder: '@username', urlPrefix: 'https://t.me/' },
+  { id: 'youtube', name: 'YouTube', icon: FaYoutube, color: '#FF0000', placeholder: 'Channel URL', urlPrefix: '' },
+  // Row 2
+  { id: 'instagram', name: 'Instagram', icon: FaInstagram, color: '#E4405F', placeholder: '@username', urlPrefix: 'https://instagram.com/' },
+  { id: 'website', name: 'Personal Website', icon: FaGlobe, color: '#4A7C25', placeholder: 'URL', urlPrefix: '' },
+  { id: 'spotify', name: 'Spotify', icon: FaSpotify, color: '#1DB954', placeholder: 'Artist URL', urlPrefix: '' },
+  // Row 3
+  { id: 'whatsapp', name: 'WhatsApp', icon: FaWhatsapp, color: '#25D366', placeholder: 'Phone number', urlPrefix: 'https://wa.me/' },
+  { id: 'facebook', name: 'Facebook', icon: FaFacebook, color: '#1877F2', placeholder: 'Profile URL', urlPrefix: '' },
+  { id: 'tiktok', name: 'TikTok', icon: FaTiktok, color: '#000000', placeholder: '@username', urlPrefix: 'https://tiktok.com/@' },
+  // Row 4
   { id: 'pinterest', name: 'Pinterest', icon: FaPinterest, color: '#E60023', placeholder: 'Profile URL', urlPrefix: '' },
+  { id: 'threads', name: 'Threads', icon: FaThreads, color: '#000000', placeholder: '@username', urlPrefix: 'https://threads.net/@' },
+  { id: 'snapchat', name: 'Snapchat', icon: FaSnapchat, color: '#FFFC00', placeholder: '@username', urlPrefix: '' },
 ];
 
 export function Onboarding() {
@@ -93,7 +97,10 @@ export function Onboarding() {
     }
   };
 
-  const handleNext = () => setCurrentStep(currentStep + 1);
+  const handleNext = () => {
+    console.log('handleNext - current step:', currentStep, '-> next:', currentStep + 1);
+    setCurrentStep(currentStep + 1);
+  };
   const handleBack = () => setCurrentStep(currentStep - 1);
   const handleSkip = () => setCurrentStep(currentStep + 1);
 
@@ -128,19 +135,24 @@ export function Onboarding() {
   const progressPercentage = (currentStep / totalSteps) * 100;
 
   // Background type değişiyor her step'te
-  const getBackgroundType = (): 'pixel-earth' | 'earth-sky' | 'plain' => {
+  const getBackgroundType = (): 'pixel-earth' | 'pixel-water' | 'pixel-grass' | 'plain' => {
     if (currentStep === 1) return 'pixel-earth'; // Goal Selection - Kahverengi toprak pixel
+    if (currentStep === 2) return 'pixel-water'; // Platform Selection - Mavi su pixel
+    if (currentStep === 3) return 'pixel-grass'; // Add Links - Yeşil çimen pixel
+    if (currentStep === 4) return 'pixel-grass'; // Profile Details - Yeşil çimen
     if (currentStep === 5) return 'plain'; // Preview - Sade beyaz
-    return 'earth-sky'; // Steps 2-4 - Alt toprak üst yeşil/mavi
+    return 'plain';
   };
 
-  return (
-    <div className="min-h-screen relative">
-      {/* Dynamic Background */}
-      <Background type={getBackgroundType()} />
+  // Debug logging removed - was causing render issues
 
-      {/* Confetti Effect */}
-      {showConfetti && (
+  return (
+    <div className="min-h-screen relative" style={currentStep === 5 ? { backgroundColor: 'white' } : undefined}>
+      {/* Dynamic Background - disabled for Step 5 to avoid render issues */}
+      {currentStep !== 5 && <Background type={getBackgroundType()} />}
+
+      {/* Confetti Effect - temporarily disabled to test */}
+      {false && showConfetti && (
         <Confetti
           width={windowDimensions.width}
           height={windowDimensions.height}
@@ -260,15 +272,15 @@ export function Onboarding() {
         {/* STEP 2: PLATFORM SELECTION */}
         {currentStep === 2 && (
           <div className="text-center pt-12 animate-fade-in">
-            <div className="text-6xl mb-6 animate-bounce-slow">🌍</div>
+            <div className="text-6xl mb-6 animate-bounce-slow">🌊</div>
             
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-lg">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-2xl" style={{ textShadow: '0 4px 12px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.7)' }}>
               Which platforms are you on?
             </h1>
-            <p className="text-white/90 text-lg mb-4 drop-shadow">
+            <p className="text-white text-lg mb-4 font-medium drop-shadow-xl" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
               Pick up to five to get started. You can update at any time.
             </p>
-            <p className="text-white/70 text-sm mb-12">
+            <p className="text-white text-sm mb-12 font-semibold drop-shadow-xl" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
               Selected: {selectedPlatforms.length}/5
             </p>
 
@@ -302,10 +314,10 @@ export function Onboarding() {
           <div className="pt-12 animate-fade-in">
             <div className="text-center mb-12">
               <div className="text-6xl mb-6 animate-bounce-slow">🔗</div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-lg">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-2xl" style={{ textShadow: '0 4px 12px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.7)' }}>
                 Add your links
               </h1>
-              <p className="text-white/90 text-lg drop-shadow">
+              <p className="text-white text-lg font-medium drop-shadow-xl" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
                 Complete the fields below to add your content to your new Forest profile.
               </p>
             </div>
@@ -378,10 +390,10 @@ export function Onboarding() {
           <div className="pt-12 animate-fade-in">
             <div className="text-center mb-12">
               <div className="text-6xl mb-6 animate-bounce-slow">✨</div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-lg">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-2xl" style={{ textShadow: '0 4px 12px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.7)' }}>
                 Add profile details
               </h1>
-              <p className="text-white/90 text-lg drop-shadow">
+              <p className="text-white text-lg font-medium drop-shadow-xl" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
                 Personalize your Forest profile with your image, name, and bio.
               </p>
             </div>
@@ -458,125 +470,84 @@ export function Onboarding() {
 
         {/* STEP 5: PREVIEW */}
         {currentStep === 5 && (
-          <div className="pt-12 text-center animate-fade-in">
-            <div className="text-7xl mb-6 animate-bounce-slow">🎉</div>
-            <h1 className="text-5xl md:text-6xl font-bold mb-4 text-primary-dark">
+          <div style={{ paddingTop: '32px', textAlign: 'center', minHeight: '100vh', backgroundColor: 'white' }}>
+            <div style={{ fontSize: '72px', marginBottom: '16px' }}>🎉</div>
+            <h1 style={{ fontSize: '48px', fontWeight: 'bold', marginBottom: '16px', color: '#1F2937' }}>
               Looking good!
             </h1>
-            <p className="text-gray-700 text-lg mb-2">
+            <p style={{ color: '#6B7280', marginBottom: '16px' }}>
               Your Forest profile is off to a great start.
             </p>
-            <p className="text-gray-600 mb-12">
+            <p style={{ color: '#6B7280', marginBottom: '48px' }}>
               Continue building to make it even better.
             </p>
 
-            {/* Phone Mockup */}
-            <div className="max-w-sm mx-auto mb-12 animate-scale-in">
-              <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-[3rem] p-3 shadow-2xl relative">
-                {/* Phone notch */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-gray-900 rounded-b-3xl z-10" />
-                
-                <div className="bg-gradient-to-b from-primary-light to-primary rounded-[2.5rem] p-6 min-h-[600px] relative overflow-hidden">
-                  {/* Decorative background pattern */}
-                  <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-10 right-10 w-32 h-32 bg-white rounded-full blur-3xl" />
-                    <div className="absolute bottom-10 left-10 w-40 h-40 bg-white rounded-full blur-3xl" />
-                  </div>
-
-                  {/* Profile Section */}
-                  <div className="text-center mb-6 relative z-10 pt-6">
-                    <div className="w-24 h-24 bg-gradient-to-br from-white to-accent-light rounded-full mx-auto mb-4 flex items-center justify-center shadow-xl ring-4 ring-white/30">
+            <div style={{ maxWidth: '384px', margin: '0 auto 48px' }}>
+              <div style={{ backgroundColor: '#F3F4F6', borderRadius: '48px', padding: '16px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+                <div style={{ backgroundColor: 'white', borderRadius: '40px', padding: '24px', minHeight: '600px' }}>
+                  <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                    <div style={{ width: '80px', height: '80px', backgroundColor: '#D1D5DB', borderRadius: '50%', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {displayName ? (
-                        <span className="text-3xl font-bold text-primary-dark">
+                        <span style={{ fontSize: '32px', fontWeight: 'bold', color: '#4B5563' }}>
                           {displayName[0].toUpperCase()}
                         </span>
                       ) : (
-                        <span className="text-5xl">👤</span>
+                        <span style={{ fontSize: '48px' }}>👤</span>
                       )}
                     </div>
-                    <h2 className="text-2xl font-bold text-white mb-2 drop-shadow-lg">
+                    <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#4A7C25', marginBottom: '8px' }}>
                       {displayName || 'Your Name'}
                     </h2>
-                    {bio && (
-                      <p className="text-sm text-white/90 mb-4 px-4 drop-shadow">
-                        {bio}
-                      </p>
-                    )}
-                    
-                    {/* Social Icons */}
-                    {selectedPlatforms.length > 0 && (
-                      <div className="flex justify-center gap-2 mb-6">
-                        {selectedPlatforms.slice(0, 3).map((platformId) => {
-                          const platform = PLATFORMS.find(p => p.id === platformId);
-                          if (!platform) return null;
-                          const Icon = platform.icon;
-                          return (
-                            <div
-                              key={platformId}
-                              className="w-11 h-11 rounded-full flex items-center justify-center shadow-xl ring-2 ring-white/70"
-                              style={{ backgroundColor: platform.color }}
-                            >
-                              <Icon className="text-white text-lg" />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                    {bio && <p style={{ fontSize: '14px', color: '#4B5563', marginBottom: '16px' }}>{bio}</p>}
                   </div>
 
-                  {/* Link Preview */}
-                  <div className="space-y-3 relative z-10">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {selectedPlatforms.slice(0, 3).map((platformId) => {
                       const platform = PLATFORMS.find(p => p.id === platformId);
                       if (!platform) return null;
-                      const Icon = platform.icon;
                       
                       return (
                         <div
                           key={platformId}
-                          className="p-4 rounded-2xl flex items-center gap-3 shadow-lg backdrop-blur-sm transform hover:scale-105 transition-transform"
                           style={{ 
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                            borderLeft: `4px solid ${platform.color}`
+                            padding: '16px', 
+                            borderRadius: '12px', 
+                            backgroundColor: platform.color,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px'
                           }}
                         >
-                          <div 
-                            className="w-11 h-11 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white"
-                            style={{ backgroundColor: platform.color }}
-                          >
-                            <Icon className="text-white text-xl" />
-                          </div>
-                          <span className="text-gray-900 font-semibold flex-1 text-left">
+                          <span style={{ color: 'white', fontWeight: '600', fontSize: '18px' }}>
                             {platform.name}
                           </span>
-                          <span className="text-gray-400">→</span>
                         </div>
                       );
                     })}
-                  </div>
-
-                  {/* Forest branding at bottom */}
-                  <div className="absolute bottom-4 left-0 right-0 text-center">
-                    <div className="flex items-center justify-center gap-2 text-white/70 text-xs">
-                      <span>🌲</span>
-                      <span>Powered by Forest</span>
-                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <Button 
-              onClick={handleFinish} 
-              fullWidth 
-              className="max-w-md mx-auto !bg-primary !text-white hover:!bg-primary-dark !shadow-2xl !py-5 !text-xl !font-bold hover:!scale-105 !transition-transform"
+            <button 
+              onClick={handleFinish}
+              style={{
+                width: '100%',
+                maxWidth: '448px',
+                margin: '0 auto',
+                display: 'block',
+                padding: '12px 24px',
+                borderRadius: '9999px',
+                fontWeight: '600',
+                backgroundColor: '#4A7C25',
+                color: 'white',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '16px'
+              }}
             >
-              🚀 Go to Dashboard
-            </Button>
-            
-            <p className="mt-6 text-sm text-gray-500">
-              You can customize everything later in your dashboard
-            </p>
+              Continue building this Linktree
+            </button>
           </div>
         )}
       </div>
@@ -632,12 +603,12 @@ function PlatformCard({ name, icon: Icon, color, selected, disabled, onClick }: 
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`relative p-4 md:p-6 rounded-2xl border-2 transition-all duration-300 transform hover:scale-105 ${
+      className={`relative p-4 md:p-6 rounded-2xl border-2 transition-all duration-300 transform ${
         selected
-          ? 'border-white bg-white shadow-2xl scale-105'
+          ? 'border-primary-light bg-white shadow-2xl scale-105 ring-4 ring-primary/30'
           : disabled
           ? 'border-white/20 bg-white/5 backdrop-blur-sm opacity-50 cursor-not-allowed'
-          : 'border-white/30 bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:border-white/50 shadow-lg'
+          : 'border-white/30 bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:border-primary-light hover:shadow-2xl hover:scale-105 hover:ring-2 hover:ring-primary/40 shadow-lg'
       }`}
     >
       <div className="flex flex-col items-center gap-2 md:gap-3">
@@ -651,7 +622,7 @@ function PlatformCard({ name, icon: Icon, color, selected, disabled, onClick }: 
           <Icon className="text-white text-2xl md:text-3xl" />
         </div>
         <p className={`text-xs md:text-sm font-semibold ${
-          selected ? 'text-gray-900' : 'text-white'
+          selected ? 'text-gray-900' : 'text-white drop-shadow-lg'
         }`}>
           {name}
         </p>
