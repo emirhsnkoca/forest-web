@@ -199,7 +199,7 @@ export function Admin() {
               </div>
               <span className="text-xl font-bold text-gray-900">Forest</span>
             </div>
-            <div className="relative">
+            <div className="relative user-dropdown">
               <button 
                 onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
                 className="flex items-center gap-2 hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors"
@@ -213,7 +213,7 @@ export function Admin() {
 
               {/* User Dropdown Menu */}
               {isUserDropdownOpen && (
-                <div className="absolute top-full left-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                <div className="absolute top-full left-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999]">
                   {/* User Profile Section */}
                   <div className="p-4 border-b border-gray-100">
                     <div className="flex items-center gap-3">
@@ -248,7 +248,8 @@ export function Admin() {
 
                     <button 
                       onClick={() => {
-                        setIsSettingsModalOpen(true);
+                        console.log('Account button clicked');
+                        navigate('/account');
                         setIsUserDropdownOpen(false);
                       }}
                       type="button" // Buton olarak işaretlendi
