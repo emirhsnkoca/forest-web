@@ -128,8 +128,8 @@ export function Onboarding() {
   const progressPercentage = (currentStep / totalSteps) * 100;
 
   // Background type değişiyor her step'te
-  const getBackgroundType = (): 'pixel-green' | 'earth-sky' | 'plain' => {
-    if (currentStep === 1) return 'pixel-green'; // Goal Selection - Yeşil pixel
+  const getBackgroundType = (): 'pixel-earth' | 'earth-sky' | 'plain' => {
+    if (currentStep === 1) return 'pixel-earth'; // Goal Selection - Kahverengi toprak pixel
     if (currentStep === 5) return 'plain'; // Preview - Sade beyaz
     return 'earth-sky'; // Steps 2-4 - Alt toprak üst yeşil/mavi
   };
@@ -203,10 +203,10 @@ export function Onboarding() {
             {/* Forest Icon */}
             <div className="text-7xl mb-6 animate-bounce-slow">🌲</div>
             
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-lg">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-2xl" style={{ textShadow: '0 4px 12px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.7)' }}>
               Which best describes your goal for using Forest?
             </h1>
-            <p className="text-white/90 text-lg mb-16 drop-shadow">
+            <p className="text-white text-lg mb-16 font-medium drop-shadow-xl" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
               This helps us personalize your Web3 experience.
             </p>
 
@@ -325,7 +325,7 @@ export function Onboarding() {
                     return (
                       <div key={platformId} className="flex items-center gap-3 animate-slide-up">
                         <div 
-                          className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg"
+                          className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 shadow-xl ring-2 ring-white"
                           style={{ backgroundColor: platform.color }}
                         >
                           <Icon className="text-white text-2xl" />
@@ -352,7 +352,7 @@ export function Onboarding() {
                   <span className="text-xs text-gray-500 font-normal">(optional)</span>
                 </h3>
                 <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center flex-shrink-0 shadow-lg">
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center flex-shrink-0 shadow-xl ring-2 ring-white">
                     <FaGlobe className="text-white text-2xl" />
                   </div>
                   <Input 
@@ -513,10 +513,10 @@ export function Onboarding() {
                           return (
                             <div
                               key={platformId}
-                              className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white/50"
+                              className="w-11 h-11 rounded-full flex items-center justify-center shadow-xl ring-2 ring-white/70"
                               style={{ backgroundColor: platform.color }}
                             >
-                              <Icon className="text-white text-base" />
+                              <Icon className="text-white text-lg" />
                             </div>
                           );
                         })}
@@ -541,10 +541,10 @@ export function Onboarding() {
                           }}
                         >
                           <div 
-                            className="w-10 h-10 rounded-xl flex items-center justify-center"
+                            className="w-11 h-11 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white"
                             style={{ backgroundColor: platform.color }}
                           >
-                            <Icon className="text-white text-lg" />
+                            <Icon className="text-white text-xl" />
                           </div>
                           <span className="text-gray-900 font-semibold flex-1 text-left">
                             {platform.name}
@@ -596,18 +596,18 @@ function GoalCard({ icon, title, description, selected, onClick }: {
       onClick={onClick}
       className={`w-full p-6 md:p-8 rounded-3xl border-3 transition-all duration-300 text-left flex items-center gap-6 transform hover:scale-[1.02] ${
         selected
-          ? 'border-white bg-white shadow-2xl scale-[1.02]'
-          : 'border-white/30 bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:border-white/50 shadow-lg'
+          ? 'border-primary bg-white shadow-2xl scale-[1.02]'
+          : 'border-white/40 bg-white/95 backdrop-blur-sm hover:bg-white hover:border-white/70 shadow-xl'
       }`}
     >
       <div className="flex-shrink-0 animate-scale-in">
         {icon}
       </div>
       <div className="flex-1">
-        <h3 className={`font-bold text-xl md:text-2xl mb-2 ${selected ? 'text-primary' : 'text-white'}`}>
+        <h3 className={`font-bold text-xl md:text-2xl mb-2 ${selected ? 'text-primary' : 'text-gray-900'}`}>
           {title}
         </h3>
-        <p className={`text-sm md:text-base ${selected ? 'text-gray-700' : 'text-white/80'}`}>
+        <p className={`text-sm md:text-base ${selected ? 'text-gray-700' : 'text-gray-700'}`}>
           {description}
         </p>
       </div>
@@ -632,7 +632,7 @@ function PlatformCard({ name, icon: Icon, color, selected, disabled, onClick }: 
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`p-4 md:p-6 rounded-2xl border-2 transition-all duration-300 transform hover:scale-105 ${
+      className={`relative p-4 md:p-6 rounded-2xl border-2 transition-all duration-300 transform hover:scale-105 ${
         selected
           ? 'border-white bg-white shadow-2xl scale-105'
           : disabled
@@ -641,13 +641,14 @@ function PlatformCard({ name, icon: Icon, color, selected, disabled, onClick }: 
       }`}
     >
       <div className="flex flex-col items-center gap-2 md:gap-3">
+        {/* TAM YUVARLAK LOGO */}
         <div 
-          className={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg transition-transform ${
-            selected ? 'scale-110' : ''
+          className={`w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-xl transition-transform ${
+            selected ? 'scale-110 ring-4 ring-white/50' : ''
           }`}
           style={{ backgroundColor: disabled ? '#9CA3AF' : color }}
         >
-          <Icon className="text-white text-xl md:text-2xl" />
+          <Icon className="text-white text-2xl md:text-3xl" />
         </div>
         <p className={`text-xs md:text-sm font-semibold ${
           selected ? 'text-gray-900' : 'text-white'
@@ -655,7 +656,7 @@ function PlatformCard({ name, icon: Icon, color, selected, disabled, onClick }: 
           {name}
         </p>
         {selected && (
-          <div className="absolute top-2 right-2 text-xl animate-scale-in">
+          <div className="absolute top-2 right-2 text-2xl animate-scale-in">
             ✅
           </div>
         )}

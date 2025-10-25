@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 
 interface BackgroundProps {
-  type: 'pixel-green' | 'earth-sky' | 'earth-green' | 'forest' | 'plain';
+  type: 'pixel-green' | 'pixel-earth' | 'earth-sky' | 'earth-green' | 'forest' | 'plain';
   children?: ReactNode;
   className?: string;
 }
@@ -11,6 +11,8 @@ export function Background({ type, children, className = '' }: BackgroundProps) 
     switch (type) {
       case 'pixel-green':
         return 'bg-pixel-green bg-forest-bg';
+      case 'pixel-earth':
+        return 'bg-pixel-earth bg-[#7D5A3F]';
       case 'earth-sky':
         return 'bg-gradient-earth-sky';
       case 'earth-green':
