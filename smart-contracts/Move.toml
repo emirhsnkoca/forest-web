@@ -7,5 +7,5 @@ edition = "2024.beta"
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "testnet" }
 
 [addresses]
-forest = "0x0"
+forest = "0x5bba6581ec347831df2f0fef9f45fe65386631d290dbbb35acaf16df2cc56fdd"
 

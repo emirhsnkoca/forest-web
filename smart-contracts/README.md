@@ -45,6 +45,27 @@ Forest platformunun Sui blockchain üzerinde çalışan Move smart contract'lar�
 - `release()` → Handle bırak
 - Dynamic Fields ile handle → profile mapping
 
+## 🚀 Deployment Bilgileri (Testnet)
+
+**Network:** Sui Testnet
+
+**Package ID:** 
+```
+0x5bba6581ec347831df2f0fef9f45fe65386631d290dbbb35acaf16df2cc56fdd
+```
+
+**Shared Objects:**
+- **Registry:** `0x1dd7bbef7284067a77e6c80095e42e37cb9a89c11c3c00d43b1ab9092b9c7de0`
+- **HandleRegistry:** `0xbeef19fe0d9e9597ca8efde5712a8beb277bc973befdb744991eb71dd6076a0d`
+
+**UpgradeCap:** `0x557aa873df720a3ccb962e78e274b47f37dd5595bbadb95013bb8a19e8e1badd`
+
+**Explorer:** [View on Sui Explorer](https://testnet.suivision.xyz/txblock/E3KwzHHYQLviqLKcJ9uNbnmiL5CqoHSFGGrUqSASCbnM)
+
+**Deployment Tarihi:** 2025-10-25
+
+---
+
 ## Kurulum
 
 ```bash
@@ -104,9 +125,15 @@ smart-contracts/
 - [x] Public read functions (is_handle_available, get_profile_by_handle, handles_count, admin)
 - [x] Error handling (E_HANDLE_EXISTS, E_HANDLE_NOT_FOUND, E_NOT_OWNER, E_EMPTY_HANDLE)
 
-**⏳ Phase 5-6: Testing & Deployment**
-- [ ] Test coverage (profile_tests, donation_tests)
-- [ ] Testnet deployment
+**✅ Phase 5: Testing (Tamamlandı)**
+- [x] profile_tests.move (5 test: create, update, visibility, non-owner, donate_settings)
+- [x] donation_tests.move (4 test: enabled, disabled, amount, custom address)
+
+**✅ Phase 6: Deployment (Tamamlandı - Testnet)**
+- [x] Sui CLI setup
+- [x] Testnet'e publish edildi
+- [x] deployment.json oluşturuldu
+- [x] Move.toml güncellendi
 
 ## 💡 Önemli Notlar
 
