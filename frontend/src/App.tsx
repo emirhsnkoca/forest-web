@@ -8,6 +8,7 @@ import { Onboarding } from './pages/Onboarding';
 import { Dashboard } from './pages/Dashboard';
 import { Profile } from './pages/Profile';
 import { Admin } from './pages/Admin';
+import { Upgrade } from './pages/Upgrade';
 import '@mysten/dapp-kit/dist/index.css';
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/profile/:address" element={<Profile />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/upgrade" element={<Upgrade />} />
               </Routes>
             </Router>
           </AuthProvider>
