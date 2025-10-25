@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { Button } from '../common/Button';
 import { FaBars, FaTimes } from 'react-icons/fa';
+import { SuiWalletConnect } from '../auth/SuiWalletConnect';
 
 interface NavbarProps {
-  onLoginClick: () => void;
+  onLoginClick?: () => void;
 }
 
-export function Navbar({ onLoginClick }: NavbarProps) {
+export function Navbar({ onLoginClick: _onLoginClick }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const scrollToSection = (sectionId: string) => {
@@ -47,12 +47,7 @@ export function Navbar({ onLoginClick }: NavbarProps) {
 
           {/* Login Button - Desktop */}
           <div className="hidden md:block">
-            <Button
-              onClick={onLoginClick}
-              className="bg-secondary hover:bg-secondary-dark text-white font-semibold px-6 py-2.5 rounded-full transition-all duration-300 hover:scale-105 shadow-md"
-            >
-              Login
-            </Button>
+            <SuiWalletConnect />
           </div>
 
           {/* Mobile Menu Button */}
@@ -80,12 +75,9 @@ export function Navbar({ onLoginClick }: NavbarProps) {
               >
                 Pricing
               </button>
-              <Button
-                onClick={onLoginClick}
-                className="bg-secondary hover:bg-secondary-dark text-white font-semibold px-6 py-2.5 rounded-full w-full"
-              >
-                Login
-              </Button>
+              <div className="pt-2">
+                <SuiWalletConnect />
+              </div>
             </div>
           </div>
         )}

@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom';
-import { useProfile } from '../hooks/useProfile';
+import { useState, useEffect } from 'react';
+import { forest } from '../forest';
 import { FaInstagram, FaTwitter, FaYoutube, FaTiktok, FaLinkedin, FaGithub } from 'react-icons/fa';
 
 const iconMap: Record<string, any> = {
@@ -13,10 +14,54 @@ const iconMap: Record<string, any> = {
 
 export function Profile() {
   const { address } = useParams<{ address: string }>();
-  const { getProfileByAddress } = useProfile(undefined);
-  const profile = address ? getProfileByAddress(address) : null;
+  const [profile, setProfile] = useState<any>(null);
+  const [links, setLinks] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string>('');
 
-  if (!profile) {
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!address) return;
+
+      try {
+        setIsLoading(true);
+        setError('');
+
+        // Profile'ı blockchain'den çek
+        const profileData = await forest.getProfile(address);
+        if (!profileData) {
+          setError('Profile not found');
+          return;
+        }
+
+        // Link'leri çek
+        const profileLinks = await forest.getProfileLinks(address);
+        
+        setProfile(profileData);
+        setLinks(profileLinks);
+      } catch (err) {
+        console.error('Profile yüklenirken hata:', err);
+        setError('Profile yüklenirken bir hata oluştu.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, [address]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !profile) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
@@ -27,9 +72,7 @@ export function Profile() {
     );
   }
 
-  const activeLinks = profile.links.filter(link => link.isActive);
-  const socialLinks = activeLinks.filter(link => link.type === 'social');
-  const customLinks = activeLinks.filter(link => link.type === 'custom');
+  const activeLinks = links.filter(link => link.is_active);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 py-12">
@@ -38,19 +81,22 @@ export function Profile() {
           {/* Profile Header */}
           <div className="text-center mb-8">
             <div className="w-24 h-24 bg-gradient-to-br from-primary to-primary-dark rounded-full mx-auto mb-4 flex items-center justify-center text-white text-3xl font-bold">
-              {profile.displayName[0].toUpperCase()}
+              {profile.display_name[0].toUpperCase()}
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {profile.displayName}
+              {profile.display_name}
             </h1>
             {profile.bio && (
               <p className="text-gray-600 mb-4">{profile.bio}</p>
             )}
+            {profile.subdomain && (
+              <p className="text-sm text-gray-500 mb-4">🌲 {profile.subdomain}</p>
+            )}
 
             {/* Social Icons */}
-            {socialLinks.length > 0 && (
+            {activeLinks.filter(link => link.type === 'social').length > 0 && (
               <div className="flex justify-center gap-4 mb-6">
-                {socialLinks.map((link) => {
+                {activeLinks.filter(link => link.type === 'social').map((link: any) => {
                   const Icon = link.platform ? iconMap[link.platform] : null;
                   return Icon ? (
                     <a
@@ -70,13 +116,13 @@ export function Profile() {
 
           {/* Links */}
           <div className="space-y-3">
-            {customLinks.length === 0 && socialLinks.length === 0 ? (
+            {activeLinks.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <p>No links to display</p>
               </div>
             ) : (
               <>
-                {customLinks.map((link) => (
+                {activeLinks.map((link) => (
                   <a
                     key={link.id}
                     href={link.url}
@@ -84,7 +130,10 @@ export function Profile() {
                     rel="noopener noreferrer"
                     className="block w-full p-4 bg-white border-2 border-gray-200 rounded-2xl hover:border-primary hover:shadow-md transition-all text-center font-semibold text-gray-900"
                   >
-                    {link.title}
+                    <div className="flex items-center justify-center gap-2">
+                      {link.icon && <span className="text-lg">{link.icon}</span>}
+                      <span>{link.title}</span>
+                    </div>
                   </a>
                 ))}
               </>

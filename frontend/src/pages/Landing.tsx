@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ConnectWalletModal } from '../components/auth/ConnectWalletModal';
 import { Button } from '../components/common/Button';
 import { Background } from '../components/common/Background';
@@ -6,14 +6,58 @@ import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import { useNavigate } from 'react-router-dom';
 import { FaWallet, FaImage, FaHeart, FaLink } from 'react-icons/fa';
+import { useCurrentAccount, useCurrentWallet } from '@mysten/dapp-kit';
 
 export function Landing() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
+  // AuthContext kaldırıldı - Mysten Labs hooks kullanılıyor
+  const suiAccount = useCurrentAccount();
+  const suiWallet = useCurrentWallet();
+
+  // Sayfa yüklendiğinde cache temizle
+  useEffect(() => {
+    console.log('🧹 Landing: Sayfa yüklendi, cache temizleniyor...');
+    // Tüm wallet cache'lerini temizle
+    localStorage.removeItem('sui-wallet-kit');
+    localStorage.removeItem('sui-wallet-kit-accounts');
+    localStorage.removeItem('sui-wallet-kit-wallets');
+    localStorage.removeItem('forest-last-wallet-address');
+    sessionStorage.clear();
+    console.log('🧹 Landing: Cache temizlendi');
+  }, []);
+
+  // Wallet bağlantı durumunu kontrol et
+  useEffect(() => {
+    if (suiAccount && suiWallet) {
+      console.log('🌲 Landing: Sui wallet bağlandı:', suiAccount.address);
+      console.log('🌲 Landing: Cüzdan türü:', (suiWallet as any)?.name || 'Unknown');
+      
+      // Yeni adresi kaydet
+      localStorage.setItem('forest-last-wallet-address', suiAccount.address);
+      
+      // Otomatik olarak onboarding'e yönlendir
+      const timer = setTimeout(() => {
+        navigate('/onboarding');
+      }, 2000); // 2 saniye bekleme - kullanıcı bağlantı durumunu görsün
+      
+      return () => clearTimeout(timer);
+    }
+  }, [suiAccount, suiWallet, navigate]);
 
   const handleWalletConnected = () => {
-    console.log('Wallet bağlandı, onboarding\'e gidiyoruz!');
+    console.log('Sui wallet bağlandı, onboarding\'e gidiyoruz!');
     navigate('/onboarding');
+  };
+
+  const handleGetStarted = () => {
+    if (suiAccount && suiWallet) {
+      // Zaten bağlıysa direkt onboarding'e git
+      navigate('/onboarding');
+    } else {
+      // Bağlı değilse modal'ı aç
+      setIsModalOpen(true);
+    }
   };
 
   return (
@@ -31,11 +75,33 @@ export function Landing() {
             <br />
             Share your links, showcase NFTs, and accept donations—all in one place.
           </p>
+          
+          {/* Wallet Connection Status */}
+          {suiAccount && suiWallet && (
+            <div className="mb-6 p-4 bg-green-100 border-2 border-green-300 rounded-2xl animate-fade-in">
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-2xl">✅</span>
+                <div className="text-center">
+                  <p className="text-green-800 font-semibold">Sui Wallet Connected!</p>
+                  <p className="text-green-600 text-sm font-mono">
+                    {suiAccount.address.slice(0, 8)}...{suiAccount.address.slice(-6)}
+                  </p>
+                  <p className="text-green-600 text-xs">
+                    Wallet: {(suiWallet as any)?.name || 'Unknown'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Loading State - AuthContext kaldırıldı, loading state artık gerekli değil */}
+
+          {/* Error State - AuthContext kaldırıldı, error state artık gerekli değil */}
           <Button 
-            onClick={() => setIsModalOpen(true)} 
+            onClick={handleGetStarted} 
             className="bg-primary hover:bg-primary-dark text-white font-bold text-lg px-10 py-4 rounded-full shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 animate-fade-in animate-delay-200"
           >
-            🚀 Get Started for Free
+            {suiAccount && suiWallet ? '🚀 Continue to Onboarding' : '🚀 Get Started for Free'}
           </Button>
           
           {/* Video Placeholder / Future Integration */}
@@ -132,8 +198,8 @@ export function Landing() {
                 'Sui wallet integration',
                 'Share link'
               ]}
-              buttonText="Get Started"
-              onButtonClick={() => setIsModalOpen(true)}
+              buttonText={suiAccount && suiWallet ? "Continue" : "Get Started"}
+              onButtonClick={handleGetStarted}
               highlighted={false}
             />
 

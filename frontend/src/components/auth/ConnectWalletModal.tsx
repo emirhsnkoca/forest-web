@@ -1,4 +1,4 @@
-import { ConnectButton, useCurrentAccount } from '@mysten/dapp-kit';
+import { ConnectButton, useCurrentAccount, useCurrentWallet } from '@mysten/dapp-kit';
 import { useEffect } from 'react';
 import { Button } from '../common/Button';
 
@@ -10,10 +10,62 @@ interface ConnectWalletModalProps {
 
 export function ConnectWalletModal({ isOpen, onClose, onConnected }: ConnectWalletModalProps) {
   const currentAccount = useCurrentAccount();
+  const currentWallet = useCurrentWallet();
+
+  // Cüzdan değişikliklerini takip et
+  useEffect(() => {
+    if (currentAccount) {
+      console.log('🔄 Cüzdan değişikliği tespit edildi!');
+      console.log('📍 Yeni adres:', currentAccount.address);
+      console.log('🔗 Cüzdan türü:', (currentWallet as any)?.name || 'Unknown');
+      
+      // Agresif cache temizleme
+      if (typeof window !== 'undefined') {
+        console.log('🧹 Agresif cache temizleme başlatılıyor...');
+        
+        // Tüm localStorage'ı temizle
+        localStorage.clear();
+        console.log('🧹 localStorage tamamen temizlendi');
+        
+        // Tüm sessionStorage'ı temizle
+        sessionStorage.clear();
+        console.log('🧹 sessionStorage tamamen temizlendi');
+        
+        // IndexedDB'yi temizle (eğer varsa)
+        if ('indexedDB' in window) {
+          indexedDB.databases().then(databases => {
+            databases.forEach(db => {
+              if (db.name) {
+                indexedDB.deleteDatabase(db.name);
+                console.log('🧹 IndexedDB temizlendi:', db.name);
+              }
+            });
+          });
+        }
+        
+        // Cache API'yi temizle
+        if ('caches' in window) {
+          caches.keys().then(cacheNames => {
+            cacheNames.forEach(cacheName => {
+              caches.delete(cacheName);
+              console.log('🧹 Cache temizlendi:', cacheName);
+            });
+          });
+        }
+        
+        console.log('🧹 Tüm cache temizleme tamamlandı');
+      }
+    }
+  }, [currentAccount, currentWallet]);
 
   // Auto-navigate when wallet connects
   useEffect(() => {
     if (currentAccount && isOpen) {
+      console.log('🔗 Cüzdan bağlandı!');
+      console.log('📍 Adres:', currentAccount.address);
+      console.log('🔗 Tam adres:', currentAccount.address);
+      console.log('📱 Kısaltılmış adres:', `${currentAccount.address.slice(0, 8)}...${currentAccount.address.slice(-6)}`);
+      
       const timer = setTimeout(() => {
         onClose();
         onConnected();
@@ -162,6 +214,13 @@ export function ConnectWalletModal({ isOpen, onClose, onConnected }: ConnectWall
                         {currentAccount.address.slice(0, 8)}...{currentAccount.address.slice(-6)}
                       </p>
                     </div>
+                    {currentWallet && (
+                        <div className="bg-black/20 rounded-xl px-4 py-2 mb-2 inline-block">
+                          <p className="text-primary-light text-xs">
+                            Wallet: {currentAccount.address.slice(0, 8)}...{currentAccount.address.slice(-6)}
+                          </p>
+                        </div>
+                    )}
                     <p className="text-white/80 text-sm">
                       Redirecting to onboarding...
                     </p>

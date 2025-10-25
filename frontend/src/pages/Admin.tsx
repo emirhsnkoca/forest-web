@@ -1,10 +1,11 @@
   import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
 import { Input } from '../components/common/Input';
-import { Link } from '../types';
+import { ProfileUpdateModal } from '../components/common/ProfileUpdateModal';
+import { forest } from '../forest';
 import {
   DndContext,
   closestCenter,
@@ -25,8 +26,16 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-interface Web3Link extends Link {
+interface Web3Link {
+  id: number; // string değil u64
+  profile_id: string;
   type: 'wallet' | 'nft' | 'defi' | 'social' | 'custom';
+  title: string;
+  url: string;
+  icon: string;
+  banner: string;
+  isActive: boolean;
+  order: number;
   blockchain?: string;
   contractAddress?: string;
   tokenId?: string;
@@ -35,15 +44,18 @@ interface Web3Link extends Link {
 
 export function Admin() {
   const navigate = useNavigate();
-  const { } = useAuth();
+  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   
   const [activeTab, setActiveTab] = useState('links');
   const [links, setLinks] = useState<Web3Link[]>([]);
   const [isAddLinkModalOpen, setIsAddLinkModalOpen] = useState(false);
+  const [isProfileUpdateModalOpen, setIsProfileUpdateModalOpen] = useState(false);
   const [editingLink, setEditingLink] = useState<Web3Link | null>(null);
   const [newLink, setNewLink] = useState({
     title: '',
     url: '',
+    icon: '',
+    banner: '',
     type: 'custom' as 'wallet' | 'nft' | 'defi' | 'social' | 'custom',
     blockchain: '',
     contractAddress: '',
@@ -51,12 +63,16 @@ export function Admin() {
   });
 
   const [profileSettings, setProfileSettings] = useState({
-    displayName: 'samcuu',
-    bio: 'Web3 Developer & NFT Collector',
+    displayName: '',
+    bio: '',
     profileImage: '',
     ensName: '',
-    customDomain: 'samcuu.forest.ee'
+    customDomain: ''
   });
+
+  const [profileId, setProfileId] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>('');
 
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
 
@@ -75,8 +91,63 @@ export function Admin() {
   );
 
   useEffect(() => {
-    loadMockData();
+    loadProfileData();
   }, []);
+
+  // Profil verilerini akıllı kontraktan yükle
+  const loadProfileData = async () => {
+    try {
+      setIsLoading(true);
+      setError('');
+      
+      // Local storage'dan profile ID'yi al
+      const storedProfileId = localStorage.getItem('forest_profile_id');
+      if (!storedProfileId) {
+        setError('Profil bulunamadı. Lütfen önce profil oluşturun.');
+        return;
+      }
+
+      setProfileId(storedProfileId);
+      
+      // Profil verilerini kontraktan çek
+      const profileData = await forest.getProfile(storedProfileId);
+      if (!profileData) {
+        setError('Profil bulunamadı.');
+        return;
+      }
+      
+      // Link'leri çek (dynamic fields'dan)
+      const profileLinks = await forest.getProfileLinks(storedProfileId);
+      
+      // Web3Link formatına dönüştür
+      const web3Links: Web3Link[] = profileLinks.map(link => ({
+        id: link.id, // number
+        profile_id: storedProfileId,
+        type: 'custom',
+        title: link.title,
+        url: link.url,
+        icon: link.icon,
+        banner: link.banner,
+        isActive: link.is_active,
+        order: link.order,
+      }));
+      
+      setLinks(web3Links);
+      setProfileSettings({
+        displayName: profileData.display_name,
+        bio: profileData.bio,
+        profileImage: profileData.image_url,
+        ensName: '',
+        customDomain: profileData.subdomain || `${profileData.username}.forest.ee`
+      });
+      
+    } catch (err) {
+      console.error('Profil verileri yüklenirken hata:', err);
+      setError('Profil verileri yüklenirken bir hata oluştu.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -96,70 +167,73 @@ export function Admin() {
     };
   }, [isUserDropdownOpen]);
 
+  // Link ekleme fonksiyonu - akıllı kontraktla
+  const handleAddLink = async () => {
+    if (!newLink.title.trim() || !newLink.url.trim()) return;
+    if (!profileId) {
+      setError('Profil ID bulunamadı.');
+      return;
+    }
 
-  const loadMockData = () => {
-// ... loadMockData içeriği aynı
-    setLinks([
-      {
-        id: '1',
-        type: 'wallet',
-        title: 'My Wallet',
-        url: 'https://sui.blockscout.com/address/0x123...abc',
-        isActive: true,
-        blockchain: 'Sui'
-      },
-      {
-        id: '2',
-        type: 'nft',
-        title: 'NFT Collection',
-        url: 'https://opensea.io/collection/my-nfts',
-        isActive: true,
-        blockchain: 'Ethereum',
-        contractAddress: '0x123...def'
-      },
-      {
-        id: '3',
-        type: 'defi',
-        title: 'DeFi Portfolio',
-        url: 'https://defi.llama.fi/portfolio/0x123...abc',
-        isActive: true,
-        blockchain: 'Ethereum'
-      },
-      {
-        id: '4',
-        type: 'social',
-        title: 'Twitter',
-        url: 'https://twitter.com/samcuu',
-        isActive: true
-      },
-      {
-        id: '5',
-        type: 'custom',
-        title: 'Personal Website',
-        url: 'https://samcuu.com',
-        isActive: false
+    try {
+      setIsLoading(true);
+      setError('');
+
+      // Yeni link'in sırasını belirle (mevcut link sayısı + 1)
+      const newOrder = links.length + 1;
+
+      const result = await forest.addLinkWithDappKit(
+        profileId,
+        newLink.title,
+        newLink.url,
+        newLink.icon || '🔗',
+        newLink.banner || '',
+        signAndExecuteTransaction
+      );
+
+      if (result.linkId !== undefined) {
+        // Link eklendi - reload et
+        await loadProfileData();
+        setNewLink({ title: '', url: '', icon: '', banner: '', type: 'custom', blockchain: '', contractAddress: '', tokenId: '' });
+        setIsAddLinkModalOpen(false);
       }
-    ]);
+    } catch (err) {
+      console.error('Link eklenirken hata:', err);
+      setError('Link eklenirken bir hata oluştu.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleAddLink = () => {
-// ... handleAddLink içeriği aynı
-    if (!newLink.title.trim() || !newLink.url.trim()) return;
+  // Link güncelleme fonksiyonu - akıllı kontraktla
+  const handleUpdateLink = async () => {
+    if (!editingLink) return;
 
-    const link: Web3Link = {
-      id: `link-${Date.now()}`,
-      type: newLink.type,
-      title: newLink.title,
-      url: newLink.url,
-      isActive: true,
-      blockchain: newLink.blockchain,
-      contractAddress: newLink.contractAddress,
-      tokenId: newLink.tokenId
-    };
+    try {
+      setIsLoading(true);
+      setError('');
 
-    setLinks([...links, link]);
-    setNewLink({ title: '', url: '', type: 'custom', blockchain: '', contractAddress: '', tokenId: '' });
-    setIsAddLinkModalOpen(false);
+      await forest.updateLinkWithDappKit(
+        profileId,
+        editingLink.id, // number
+        newLink.title,
+        newLink.url,
+        newLink.icon || '🔗',
+        newLink.banner || '',
+        signAndExecuteTransaction
+      );
+
+      // Link güncellendi - reload et
+      await loadProfileData();
+      setEditingLink(null);
+      setNewLink({ title: '', url: '', icon: '', banner: '', type: 'custom', blockchain: '', contractAddress: '', tokenId: '' });
+      setIsAddLinkModalOpen(false);
+    } catch (err) {
+      console.error('Link güncellenirken hata:', err);
+      setError('Link güncellenirken bir hata oluştu.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleEditLink = (link: Web3Link) => {
@@ -168,6 +242,8 @@ export function Admin() {
     setNewLink({
       title: link.title,
       url: link.url,
+      icon: link.icon,
+      banner: link.banner,
       type: link.type,
       blockchain: link.blockchain || '',
       contractAddress: link.contractAddress || '',
@@ -176,30 +252,99 @@ export function Admin() {
     setIsAddLinkModalOpen(true);
   };
 
-  const handleUpdateLink = () => {
-// ... handleUpdateLink içeriği aynı
-    if (!editingLink) return;
+  // Link silme fonksiyonu - akıllı kontraktla
+  const handleDeleteLink = async (linkId: number) => {
+    if (!confirm('Bu linki silmek istediğinizden emin misiniz?')) return;
 
-    const updatedLinks = links.map(link =>
-      link.id === editingLink.id
-        ? { ...link, ...newLink, blockchain: newLink.blockchain, contractAddress: newLink.contractAddress, tokenId: newLink.tokenId }
-        : link
-    );
+    try {
+      setIsLoading(true);
+      setError('');
 
-    setLinks(updatedLinks);
-    setEditingLink(null);
-    setNewLink({ title: '', url: '', type: 'custom', blockchain: '', contractAddress: '', tokenId: '' });
-    setIsAddLinkModalOpen(false);
+      await forest.deleteLinkWithDappKit(
+        profileId,
+        linkId,
+        signAndExecuteTransaction
+      );
+
+      // Link silindi - reload et
+      await loadProfileData();
+    } catch (err) {
+      console.error('Link silinirken hata:', err);
+      setError('Link silinirken bir hata oluştu.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDeleteLink = (linkId: string) => {
-    setLinks(links.filter(link => link.id !== linkId));
+  // Link aktif/pasif durumu değiştirme - akıllı kontraktla
+  const handleToggleLink = async (linkId: number) => {
+    const link = links.find(l => l.id === linkId);
+    if (!link) return;
+
+    try {
+      setIsLoading(true);
+      setError('');
+
+      await forest.toggleLinkWithDappKit(
+        profileId,
+        linkId,
+        !link.isActive,
+        signAndExecuteTransaction
+      );
+
+      // Link toggle edildi - reload et
+      await loadProfileData();
+    } catch (err) {
+      console.error('Link toggle edilirken hata:', err);
+      setError('Link toggle edilirken bir hata oluştu.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleToggleLink = (linkId: string) => {
-    setLinks(links.map(link =>
-      link.id === linkId ? { ...link, isActive: !link.isActive } : link
-    ));
+  // Profile update fonksiyonu
+  const handleProfileUpdate = async (displayName: string, bio: string, imageUrl: string, subdomain: string) => {
+    if (!profileId) return;
+
+    try {
+      setIsLoading(true);
+      setError('');
+
+      // Profile bilgilerini güncelle
+      await forest.updateProfileWithDappKit(
+        profileId,
+        displayName,
+        bio,
+        signAndExecuteTransaction
+      );
+
+      // Profile image güncelle
+      if (imageUrl !== profileSettings.profileImage) {
+        await forest.updateProfileImageWithDappKit(
+          profileId,
+          imageUrl,
+          signAndExecuteTransaction
+        );
+      }
+
+      // Subdomain güncelle
+      if (subdomain !== profileSettings.customDomain) {
+        await forest.updateSubdomainWithDappKit(
+          profileId,
+          subdomain,
+          signAndExecuteTransaction
+        );
+      }
+
+      // Profil güncellendi - reload et
+      await loadProfileData();
+      setIsProfileUpdateModalOpen(false);
+    } catch (err) {
+      console.error('Profile güncellenirken hata:', err);
+      setError('Profile güncellenirken bir hata oluştu.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCloseModal = () => {
@@ -208,19 +353,49 @@ export function Admin() {
     setNewLink({ title: '', url: '', type: 'custom', blockchain: '', contractAddress: '', tokenId: '' });
   };
 
-  // Optimized drag end handler with useCallback
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
+  // Optimized drag end handler with useCallback - akıllı kontraktla entegre
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
+    if (!over || active.id === over.id) return;
 
-    if (active.id !== over?.id) {
-      setLinks((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over?.id);
+    const oldIndex = links.findIndex((link) => link.id.toString() === active.id);
+    const newIndex = links.findIndex((link) => link.id.toString() === over.id);
 
-        return arrayMove(items, oldIndex, newIndex);
-      });
+    const reorderedLinks = arrayMove(links, oldIndex, newIndex);
+    
+    // UI'ı hemen güncelle (optimistic update)
+    setLinks(reorderedLinks);
+
+    try {
+      setIsLoading(true);
+      setError('');
+
+      // Her link'in yeni sırasını güncelle
+      for (let i = 0; i < reorderedLinks.length; i++) {
+        const link = reorderedLinks[i];
+        const newOrder = i;
+        
+        if (link.order !== newOrder) {
+          await forest.reorderLinkWithDappKit(
+            profileId,
+            link.id,
+            newOrder,
+            signAndExecuteTransaction
+          );
+        }
+      }
+      
+      // Reload et (blockchain'den doğrula)
+      await loadProfileData();
+    } catch (err) {
+      console.error('Link sıralaması değiştirilirken hata:', err);
+      setError('Link sıralaması değiştirilirken bir hata oluştu.');
+      // Hata olursa tekrar yükle
+      await loadProfileData();
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  }, [links, signAndExecuteTransaction, profileId]);
 
   // Memoized link IDs for better performance
   const linkIds = useMemo(() => links.map(link => link.id), [links]);
@@ -400,16 +575,46 @@ export function Admin() {
         {/* Main Content */}
         <div className="flex-1 bg-gray-50 p-6">
           <div className="max-w-4xl">
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <span className="text-red-600">⚠️</span>
+                  <span className="text-red-800 font-medium">{error}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Loading State */}
+            {isLoading && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                  <span className="text-blue-800 font-medium">İşlem yapılıyor...</span>
+                </div>
+              </div>
+            )}
+
             {/* Profile Header */}
             <div className="bg-white rounded-lg p-6 mb-6">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
                   <span className="text-gray-600 text-2xl">👤</span>
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">{profileSettings.displayName}</h2>
-                  <p className="text-gray-600">{profileSettings.bio}</p>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900">
+                    {profileSettings.displayName || 'Yükleniyor...'}
+                  </h2>
+                  <p className="text-gray-600">
+                    {profileSettings.bio || 'Profil bilgileri yükleniyor...'}
+                  </p>
                 </div>
+                <button
+                  onClick={() => setIsProfileUpdateModalOpen(true)}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
+                >
+                  Edit Profile
+                </button>
               </div>
               
 
@@ -424,10 +629,11 @@ export function Admin() {
               <div className="flex gap-4">
                 <Button 
                   onClick={() => setIsAddLinkModalOpen(true)}
-                  className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-3 rounded-lg font-medium shadow-sm transition-all duration-200 hover:scale-105"
+                  disabled={isLoading}
+                  className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-3 rounded-lg font-medium shadow-sm transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="mr-2">+</span>
-                  Add
+                  {isLoading ? 'Yükleniyor...' : 'Add'}
                 </Button>
               </div>
             </div>
@@ -592,6 +798,20 @@ export function Admin() {
             onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
           />
 
+          <Input
+            label="Icon"
+            placeholder="📸 or https://example.com/icon.png"
+            value={newLink.icon}
+            onChange={(e) => setNewLink({ ...newLink, icon: e.target.value })}
+          />
+
+          <Input
+            label="Banner"
+            placeholder="https://example.com/banner.jpg"
+            value={newLink.banner}
+            onChange={(e) => setNewLink({ ...newLink, banner: e.target.value })}
+          />
+
           {(['wallet', 'nft', 'defi'] as const).includes(newLink.type as any) && (
             <>
               <Input
@@ -623,9 +843,10 @@ export function Admin() {
           <div className="flex gap-3 pt-4">
             <Button
               onClick={editingLink ? handleUpdateLink : handleAddLink}
-              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-sm transition-all duration-200 hover:scale-105"
+              disabled={isLoading}
+              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-sm transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {editingLink ? 'Update Link' : 'Add Link'}
+              {isLoading ? 'İşleniyor...' : (editingLink ? 'Update Link' : 'Add Link')}
             </Button>
             <Button onClick={handleCloseModal} variant="outline">
               Cancel
@@ -782,6 +1003,25 @@ const SortableLink = React.memo(({ link, onEdit, onDelete, onToggle }: {
           </div>
         </div>
       </div>
+
+      {/* Profile Update Modal */}
+      <ProfileUpdateModal
+        isOpen={isProfileUpdateModalOpen}
+        onClose={() => setIsProfileUpdateModalOpen(false)}
+        profile={profileSettings ? {
+          id: profileId || '',
+          owner: '',
+          username: '',
+          display_name: profileSettings.displayName,
+          bio: profileSettings.bio,
+          image_url: profileSettings.profileImage,
+          subdomain: profileSettings.customDomain,
+          link_ids: [],
+          link_count: 0
+        } : null}
+        onUpdate={handleProfileUpdate}
+        isLoading={isLoading}
+      />
     </div>
   );
 });

@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 3009",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
@@ -22,10 +22,16 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@mysten/dapp-kit": "^0.19.6",
     "@mysten/sui": "^1.43.1",
+    "@mysten/wallet-adapter-base": "^0.9.0",
+    "@mysten/wallet-adapter-sui-wallet": "^0.3.0",
+    "@mysten/wallet-adapter-unsafe-burner": "^0.10.0",
+    "@mysten/wallet-adapter-wallet-standard": "^0.8.0",
+    "@mysten/wallet-kit": "^0.8.6",
     "@tanstack/react-query": "^5.90.5",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "react": "^18.3.1",
+    "react-confetti": "^6.4.0",
     "react-dom": "^18.3.1",
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.9.4"

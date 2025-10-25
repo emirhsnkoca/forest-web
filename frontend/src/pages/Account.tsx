@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useCurrentAccount } from '@mysten/dapp-kit';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { Textarea } from '../components/common/Textarea';
 
 export function Account() {
   const navigate = useNavigate();
-  const { currentAccount, isConnected } = useAuth();
+  // Mysten Labs dapp-kit hooks kullanılıyor
+  const currentAccount = useCurrentAccount();
+  const isConnected = !!currentAccount;
   
   const [profileData, setProfileData] = useState({
     name: 'TAHA ÖZLÜ',
