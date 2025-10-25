@@ -7,6 +7,7 @@ import { Landing } from './pages/Landing';
 import { Onboarding } from './pages/Onboarding';
 import { Dashboard } from './pages/Dashboard';
 import { Profile } from './pages/Profile';
+import { Admin } from './pages/Admin';
 import '@mysten/dapp-kit/dist/index.css';
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ function App() {
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/profile/:address" element={<Profile />} />
+                <Route path="/admin" element={<Admin />} />
               </Routes>
             </Router>
           </AuthProvider>
