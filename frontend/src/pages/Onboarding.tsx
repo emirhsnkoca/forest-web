@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { Textarea } from '../components/common/Textarea';
+import { Background } from '../components/common/Background';
+import Confetti from 'react-confetti';
 import { Link } from '../types';
 import { 
   FaInstagram, 
@@ -60,10 +62,26 @@ export function Onboarding() {
   const [platformLinks, setPlatformLinks] = useState<Record<string, string>>({});
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [windowDimensions, setWindowDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
 
-  // SORUN BU SATIRLARDI - KALDIRILDI!
-  // Wallet bağlı olmadan buraya zaten gelinemez, bu kontrol gereksiz
-  // ve timing problemi yaratıyordu
+  // Confetti effect on preview step
+  useEffect(() => {
+    if (currentStep === 5) {
+      setShowConfetti(true);
+      const timer = setTimeout(() => setShowConfetti(false), 5000); // 5 saniye sonra dur
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep]);
+
+  // Window resize için confetti boyutları
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowDimensions({ width: window.innerWidth, height: window.innerHeight });
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handlePlatformToggle = (platformId: string) => {
     if (selectedPlatforms.includes(platformId)) {
@@ -109,57 +127,118 @@ export function Onboarding() {
 
   const progressPercentage = (currentStep / totalSteps) * 100;
 
+  // Background type değişiyor her step'te
+  const getBackgroundType = (): 'pixel-green' | 'earth-sky' | 'plain' => {
+    if (currentStep === 1) return 'pixel-green'; // Goal Selection - Yeşil pixel
+    if (currentStep === 5) return 'plain'; // Preview - Sade beyaz
+    return 'earth-sky'; // Steps 2-4 - Alt toprak üst yeşil/mavi
+  };
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* Progress Bar */}
-      <div className="fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50">
-        <div
-          className="h-full bg-primary transition-all duration-300"
-          style={{ width: `${progressPercentage}%` }}
+    <div className="min-h-screen relative">
+      {/* Dynamic Background */}
+      <Background type={getBackgroundType()} />
+
+      {/* Confetti Effect */}
+      {showConfetti && (
+        <Confetti
+          width={windowDimensions.width}
+          height={windowDimensions.height}
+          colors={['#4A7C25', '#6B9F3D', '#7D5A3F', '#2A7F99', '#3BA0C1']}
+          numberOfPieces={200}
+          recycle={false}
         />
+      )}
+
+      {/* Progress Bar - Forest Theme */}
+      <div className="fixed top-0 left-0 right-0 h-2 bg-black/10 backdrop-blur-sm z-50 shadow-sm">
+        <div
+          className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-500 ease-out relative overflow-hidden"
+          style={{ width: `${progressPercentage}%` }}
+        >
+          {/* Animated shine effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+        </div>
       </div>
 
-      {/* Navigation */}
-      <div className="fixed top-4 left-0 right-0 px-6 flex justify-between items-center z-40">
-        {currentStep > 1 && (
-          <button onClick={handleBack} className="text-gray-700 hover:text-gray-900 font-medium">
-            Back
+      {/* Step Indicator */}
+      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-40">
+        <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg border border-primary/20">
+          <span className="text-sm font-semibold text-primary">
+            Step {currentStep} of {totalSteps}
+          </span>
+        </div>
+      </div>
+
+      {/* Navigation Buttons */}
+      <div className="fixed top-6 left-0 right-0 px-6 flex justify-between items-center z-40">
+        {currentStep > 1 ? (
+          <button 
+            onClick={handleBack} 
+            className="group flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-md hover:shadow-lg transition-all duration-200 border border-earth/20"
+          >
+            <span className="text-xl group-hover:-translate-x-1 transition-transform">←</span>
+            <span className="font-medium text-earth-dark">Back</span>
           </button>
+        ) : (
+          <div></div>
         )}
-        <div className="flex-1" />
-        {currentStep < 4 && (
-          <button onClick={handleSkip} className="text-gray-700 hover:text-gray-900 font-medium">
+        
+        {currentStep < 4 ? (
+          <button 
+            onClick={handleSkip} 
+            className="px-4 py-2 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-md hover:shadow-lg transition-all duration-200 font-medium text-primary hover:text-primary-dark border border-primary/20"
+          >
             Skip
           </button>
+        ) : (
+          <div></div>
         )}
       </div>
 
-      <div className="container mx-auto px-4 py-16 max-w-2xl">
+      <div className="container mx-auto px-4 py-16 max-w-2xl relative z-10">
         {/* STEP 1: GOAL SELECTION */}
         {currentStep === 1 && (
-          <div className="text-center pt-8">
-            <h1 className="text-5xl font-bold mb-4">
-              Which best describes your goal for using Linktree?
+          <div className="text-center pt-12 animate-fade-in">
+            {/* Forest Icon */}
+            <div className="text-7xl mb-6 animate-bounce-slow">🌲</div>
+            
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-lg">
+              Which best describes your goal for using Forest?
             </h1>
-            <p className="text-gray-500 mb-16">This helps us personalize your experience.</p>
+            <p className="text-white/90 text-lg mb-16 drop-shadow">
+              This helps us personalize your Web3 experience.
+            </p>
 
             <div className="space-y-4 mb-12">
               <GoalCard
-                icon={<div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-lime-400 to-purple-600 flex items-center justify-center text-white text-3xl">🎨</div>}
+                icon={
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-light to-accent flex items-center justify-center text-white text-4xl shadow-lg">
+                    🎨
+                  </div>
+                }
                 title="Creator"
                 description="Build my following and explore ways to monetize my audience."
                 selected={goal === 'creator'}
                 onClick={() => setGoal('creator')}
               />
               <GoalCard
-                icon={<div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white text-3xl">💼</div>}
+                icon={
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-earth to-earth-dark flex items-center justify-center text-white text-4xl shadow-lg">
+                    💼
+                  </div>
+                }
                 title="Business"
                 description="Grow my business and reach more customers."
                 selected={goal === 'business'}
                 onClick={() => setGoal('business')}
               />
               <GoalCard
-                icon={<div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center text-white text-3xl">👤</div>}
+                icon={
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-accent-dark to-primary-dark flex items-center justify-center text-white text-4xl shadow-lg">
+                    👤
+                  </div>
+                }
                 title="Personal"
                 description="Share links with my friends and acquaintances."
                 selected={goal === 'personal'}
@@ -167,21 +246,33 @@ export function Onboarding() {
               />
             </div>
 
-            <Button onClick={handleNext} disabled={!goal} fullWidth className="max-w-md mx-auto">
-              Continue
+            <Button 
+              onClick={handleNext} 
+              disabled={!goal} 
+              fullWidth 
+              className="max-w-md mx-auto !bg-white !text-primary hover:!bg-white/90 !shadow-xl !py-4 !text-lg !font-bold disabled:!opacity-50 disabled:!cursor-not-allowed"
+            >
+              Continue to Platforms →
             </Button>
           </div>
         )}
   
         {/* STEP 2: PLATFORM SELECTION */}
         {currentStep === 2 && (
-          <div className="text-center pt-8">
-            <h1 className="text-5xl font-bold mb-4">Which platforms are you on?</h1>
-            <p className="text-gray-500 mb-16">
+          <div className="text-center pt-12 animate-fade-in">
+            <div className="text-6xl mb-6 animate-bounce-slow">🌍</div>
+            
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-lg">
+              Which platforms are you on?
+            </h1>
+            <p className="text-white/90 text-lg mb-4 drop-shadow">
               Pick up to five to get started. You can update at any time.
             </p>
+            <p className="text-white/70 text-sm mb-12">
+              Selected: {selectedPlatforms.length}/5
+            </p>
 
-            <div className="grid grid-cols-3 gap-4 mb-12">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-12">
               {PLATFORMS.map((platform) => (
                 <PlatformCard
                   key={platform.id}
@@ -189,6 +280,7 @@ export function Onboarding() {
                   icon={platform.icon}
                   color={platform.color}
                   selected={selectedPlatforms.includes(platform.id)}
+                  disabled={!selectedPlatforms.includes(platform.id) && selectedPlatforms.length >= 5}
                   onClick={() => handlePlatformToggle(platform.id)}
                 />
               ))}
@@ -198,61 +290,84 @@ export function Onboarding() {
               onClick={handleNext}
               disabled={selectedPlatforms.length === 0}
               fullWidth
-              className="max-w-md mx-auto"
+              className="max-w-md mx-auto !bg-white !text-primary hover:!bg-white/90 !shadow-xl !py-4 !text-lg !font-bold disabled:!opacity-50 disabled:!cursor-not-allowed"
             >
-              Continue
+              Continue to Links →
             </Button>
           </div>
         )}
 
         {/* STEP 3: ADD LINKS */}
         {currentStep === 3 && (
-          <div className="pt-8">
-            <h1 className="text-5xl font-bold mb-4 text-center">Add your links</h1>
-            <p className="text-gray-500 mb-12 text-center">
-              Complete the fields below to add your content to your new Linktree.
-            </p>
+          <div className="pt-12 animate-fade-in">
+            <div className="text-center mb-12">
+              <div className="text-6xl mb-6 animate-bounce-slow">🔗</div>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-lg">
+                Add your links
+              </h1>
+              <p className="text-white/90 text-lg drop-shadow">
+                Complete the fields below to add your content to your new Forest profile.
+              </p>
+            </div>
 
             <div className="max-w-lg mx-auto">
-              <h3 className="font-semibold text-lg mb-4">Your selections</h3>
-              <div className="space-y-3 mb-8">
-                {selectedPlatforms.map((platformId) => {
-                  const platform = PLATFORMS.find(p => p.id === platformId);
-                  if (!platform) return null;
-                  const Icon = platform.icon;
-                  
-                  return (
-                    <div key={platformId} className="flex items-center gap-3">
-                      <div 
-                        className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: platform.color }}
-                      >
-                        <Icon className="text-white text-xl" />
+              <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-6 md:p-8 mb-6">
+                <h3 className="font-semibold text-lg md:text-xl mb-6 text-primary flex items-center gap-2">
+                  <span>🌿</span>
+                  Your selections
+                </h3>
+                <div className="space-y-4">
+                  {selectedPlatforms.map((platformId) => {
+                    const platform = PLATFORMS.find(p => p.id === platformId);
+                    if (!platform) return null;
+                    const Icon = platform.icon;
+                    
+                    return (
+                      <div key={platformId} className="flex items-center gap-3 animate-slide-up">
+                        <div 
+                          className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg"
+                          style={{ backgroundColor: platform.color }}
+                        >
+                          <Icon className="text-white text-2xl" />
+                        </div>
+                        <Input
+                          placeholder={platform.placeholder}
+                          value={platformLinks[platformId] || ''}
+                          onChange={(e) => setPlatformLinks({
+                            ...platformLinks,
+                            [platformId]: e.target.value
+                          })}
+                          className="flex-1 !border-2 !border-primary/20 focus:!border-primary"
+                        />
                       </div>
-                      <Input
-                        placeholder={platform.placeholder}
-                        value={platformLinks[platformId] || ''}
-                        onChange={(e) => setPlatformLinks({
-                          ...platformLinks,
-                          [platformId]: e.target.value
-                        })}
-                        className="flex-1"
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-
-              <h3 className="font-semibold text-lg mb-4">Additional links</h3>
-              <div className="flex items-center gap-3 mb-12">
-                <div className="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
-                  <FaGlobe className="text-gray-600 text-xl" />
+                    );
+                  })}
                 </div>
-                <Input placeholder="url" className="flex-1" />
               </div>
 
-              <Button onClick={handleNext} fullWidth>
-                Continue
+              <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-6 md:p-8 mb-6">
+                <h3 className="font-semibold text-lg md:text-xl mb-6 text-accent flex items-center gap-2">
+                  <span>🌐</span>
+                  Additional links
+                  <span className="text-xs text-gray-500 font-normal">(optional)</span>
+                </h3>
+                <div className="flex items-center gap-3">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <FaGlobe className="text-white text-2xl" />
+                  </div>
+                  <Input 
+                    placeholder="https://yourwebsite.com" 
+                    className="flex-1 !border-2 !border-accent/20 focus:!border-accent" 
+                  />
+                </div>
+              </div>
+
+              <Button 
+                onClick={handleNext} 
+                fullWidth
+                className="!bg-white !text-primary hover:!bg-white/90 !shadow-xl !py-4 !text-lg !font-bold"
+              >
+                Continue to Profile Details →
               </Button>
             </div>
           </div>
@@ -260,104 +375,148 @@ export function Onboarding() {
 
         {/* STEP 4: PROFILE DETAILS */}
         {currentStep === 4 && (
-          <div className="pt-8">
-            <h1 className="text-5xl font-bold mb-4 text-center">Add profile details</h1>
-            <p className="text-gray-500 mb-12 text-center">
-              Add your profile image, name, and bio.
-            </p>
+          <div className="pt-12 animate-fade-in">
+            <div className="text-center mb-12">
+              <div className="text-6xl mb-6 animate-bounce-slow">✨</div>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-lg">
+                Add profile details
+              </h1>
+              <p className="text-white/90 text-lg drop-shadow">
+                Personalize your Forest profile with your image, name, and bio.
+              </p>
+            </div>
 
             <div className="max-w-lg mx-auto">
-              {/* Profile Image */}
-              <div className="flex justify-center mb-8">
-                <div className="relative">
-                  <div className="w-32 h-32 bg-gray-300 rounded-full flex items-center justify-center">
-                    {displayName ? (
-                      <span className="text-4xl font-bold text-gray-600">
-                        {displayName[0].toUpperCase()}
-                      </span>
-                    ) : (
-                      <span className="text-6xl text-gray-500">👤</span>
-                    )}
+              <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-6 md:p-8">
+                {/* Profile Image */}
+                <div className="flex justify-center mb-8">
+                  <div className="relative group">
+                    <div className="w-32 h-32 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-2xl ring-4 ring-white/50 transition-transform group-hover:scale-105">
+                      {displayName ? (
+                        <span className="text-5xl font-bold text-white">
+                          {displayName[0].toUpperCase()}
+                        </span>
+                      ) : (
+                        <span className="text-6xl">👤</span>
+                      )}
+                    </div>
+                    <button className="absolute bottom-0 right-0 w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white text-2xl hover:bg-primary-dark transition-all shadow-lg hover:scale-110 ring-4 ring-white">
+                      📷
+                    </button>
                   </div>
-                  <button className="absolute bottom-0 right-0 w-10 h-10 bg-black rounded-full flex items-center justify-center text-white text-xl hover:bg-gray-800 transition-colors">
-                    +
-                  </button>
                 </div>
-              </div>
 
-              <div className="space-y-6">
-                <Input
-                  label="Display Name"
-                  placeholder="samcuu"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                />
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-primary mb-2">
+                      Display Name *
+                    </label>
+                    <Input
+                      placeholder="Enter your name"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      className="!border-2 !border-primary/20 focus:!border-primary"
+                    />
+                  </div>
 
-                <div>
-                  <Textarea
-                    label="Bio"
-                    placeholder=""
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    rows={4}
-                    maxLength={160}
-                  />
-                  <p className="text-sm text-gray-500 text-right mt-1">{bio.length}/160</p>
+                  <div>
+                    <label className="block text-sm font-semibold text-primary mb-2">
+                      Bio
+                    </label>
+                    <Textarea
+                      placeholder="Tell the world about yourself..."
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      rows={4}
+                      maxLength={160}
+                      className="!border-2 !border-primary/20 focus:!border-primary resize-none"
+                    />
+                    <div className="flex justify-between items-center mt-2">
+                      <p className="text-xs text-gray-500">
+                        Optional, but recommended
+                      </p>
+                      <p className={`text-sm font-medium ${
+                        bio.length > 150 ? 'text-red-500' : 'text-primary'
+                      }`}>
+                        {bio.length}/160
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              <Button onClick={handleNext} fullWidth className="mt-8">
-                Continue
-              </Button>
+                <Button 
+                  onClick={handleNext} 
+                  fullWidth 
+                  className="mt-8 !bg-primary !text-white hover:!bg-primary-dark !shadow-xl !py-4 !text-lg !font-bold"
+                >
+                  Preview My Profile →
+                </Button>
+              </div>
             </div>
           </div>
         )}
 
         {/* STEP 5: PREVIEW */}
         {currentStep === 5 && (
-          <div className="pt-8 text-center">
-            <h1 className="text-5xl font-bold mb-4">Looking good!</h1>
-            <p className="text-gray-500 mb-4">
-              Your Linktree is off to a great start.
+          <div className="pt-12 text-center animate-fade-in">
+            <div className="text-7xl mb-6 animate-bounce-slow">🎉</div>
+            <h1 className="text-5xl md:text-6xl font-bold mb-4 text-primary-dark">
+              Looking good!
+            </h1>
+            <p className="text-gray-700 text-lg mb-2">
+              Your Forest profile is off to a great start.
             </p>
-            <p className="text-gray-500 mb-12">
+            <p className="text-gray-600 mb-12">
               Continue building to make it even better.
             </p>
 
             {/* Phone Mockup */}
-            <div className="max-w-sm mx-auto mb-12">
-              <div className="bg-gray-100 rounded-[3rem] p-4 shadow-2xl">
-                <div className="bg-white rounded-[2.5rem] p-6 min-h-[600px]">
+            <div className="max-w-sm mx-auto mb-12 animate-scale-in">
+              <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-[3rem] p-3 shadow-2xl relative">
+                {/* Phone notch */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-gray-900 rounded-b-3xl z-10" />
+                
+                <div className="bg-gradient-to-b from-primary-light to-primary rounded-[2.5rem] p-6 min-h-[600px] relative overflow-hidden">
+                  {/* Decorative background pattern */}
+                  <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-10 right-10 w-32 h-32 bg-white rounded-full blur-3xl" />
+                    <div className="absolute bottom-10 left-10 w-40 h-40 bg-white rounded-full blur-3xl" />
+                  </div>
+
                   {/* Profile Section */}
-                  <div className="text-center mb-6">
-                    <div className="w-20 h-20 bg-gray-300 rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <div className="text-center mb-6 relative z-10 pt-6">
+                    <div className="w-24 h-24 bg-gradient-to-br from-white to-accent-light rounded-full mx-auto mb-4 flex items-center justify-center shadow-xl ring-4 ring-white/30">
                       {displayName ? (
-                        <span className="text-2xl font-bold text-gray-600">
+                        <span className="text-3xl font-bold text-primary-dark">
                           {displayName[0].toUpperCase()}
                         </span>
                       ) : (
-                        <span className="text-4xl">👤</span>
+                        <span className="text-5xl">👤</span>
                       )}
                     </div>
-                    <h2 className="text-xl font-bold text-primary mb-2">
-                      {displayName || 'samcuu'}
+                    <h2 className="text-2xl font-bold text-white mb-2 drop-shadow-lg">
+                      {displayName || 'Your Name'}
                     </h2>
-                    {bio && <p className="text-sm text-gray-600 mb-4">{bio}</p>}
+                    {bio && (
+                      <p className="text-sm text-white/90 mb-4 px-4 drop-shadow">
+                        {bio}
+                      </p>
+                    )}
                     
                     {/* Social Icons */}
                     {selectedPlatforms.length > 0 && (
-                      <div className="flex justify-center gap-3 mb-6">
-                        {selectedPlatforms.slice(0, 2).map((platformId) => {
+                      <div className="flex justify-center gap-2 mb-6">
+                        {selectedPlatforms.slice(0, 3).map((platformId) => {
                           const platform = PLATFORMS.find(p => p.id === platformId);
                           if (!platform) return null;
                           const Icon = platform.icon;
                           return (
                             <div
                               key={platformId}
-                              className="w-10 h-10 rounded-full flex items-center justify-center"
+                              className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white/50"
                               style={{ backgroundColor: platform.color }}
                             >
-                              <Icon className="text-white text-lg" />
+                              <Icon className="text-white text-base" />
                             </div>
                           );
                         })}
@@ -366,8 +525,8 @@ export function Onboarding() {
                   </div>
 
                   {/* Link Preview */}
-                  <div className="space-y-3">
-                    {selectedPlatforms.slice(0, 1).map((platformId) => {
+                  <div className="space-y-3 relative z-10">
+                    {selectedPlatforms.slice(0, 3).map((platformId) => {
                       const platform = PLATFORMS.find(p => p.id === platformId);
                       if (!platform) return null;
                       const Icon = platform.icon;
@@ -375,33 +534,49 @@ export function Onboarding() {
                       return (
                         <div
                           key={platformId}
-                          className="p-4 rounded-xl flex items-center gap-3"
-                          style={{ backgroundColor: platform.color }}
+                          className="p-4 rounded-2xl flex items-center gap-3 shadow-lg backdrop-blur-sm transform hover:scale-105 transition-transform"
+                          style={{ 
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            borderLeft: `4px solid ${platform.color}`
+                          }}
                         >
-                          <Icon className="text-white text-2xl" />
-                          <span className="text-white font-semibold text-lg">
+                          <div 
+                            className="w-10 h-10 rounded-xl flex items-center justify-center"
+                            style={{ backgroundColor: platform.color }}
+                          >
+                            <Icon className="text-white text-lg" />
+                          </div>
+                          <span className="text-gray-900 font-semibold flex-1 text-left">
                             {platform.name}
                           </span>
+                          <span className="text-gray-400">→</span>
                         </div>
                       );
                     })}
                   </div>
 
-                  {/* Menu dots */}
-                  <div className="absolute bottom-4 right-4">
-                    <div className="flex gap-1">
-                      <div className="w-1 h-1 bg-gray-400 rounded-full" />
-                      <div className="w-1 h-1 bg-gray-400 rounded-full" />
-                      <div className="w-1 h-1 bg-gray-400 rounded-full" />
+                  {/* Forest branding at bottom */}
+                  <div className="absolute bottom-4 left-0 right-0 text-center">
+                    <div className="flex items-center justify-center gap-2 text-white/70 text-xs">
+                      <span>🌲</span>
+                      <span>Powered by Forest</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <Button onClick={handleFinish} fullWidth className="max-w-md mx-auto">
-              Continue building this Linktree
+            <Button 
+              onClick={handleFinish} 
+              fullWidth 
+              className="max-w-md mx-auto !bg-primary !text-white hover:!bg-primary-dark !shadow-2xl !py-5 !text-xl !font-bold hover:!scale-105 !transition-transform"
+            >
+              🚀 Go to Dashboard
             </Button>
+            
+            <p className="mt-6 text-sm text-gray-500">
+              You can customize everything later in your dashboard
+            </p>
           </div>
         )}
       </div>
@@ -419,45 +594,71 @@ function GoalCard({ icon, title, description, selected, onClick }: {
   return (
     <button
       onClick={onClick}
-      className={`w-full p-6 rounded-2xl border-2 transition-all text-left flex items-center gap-6 ${
+      className={`w-full p-6 md:p-8 rounded-3xl border-3 transition-all duration-300 text-left flex items-center gap-6 transform hover:scale-[1.02] ${
         selected
-          ? 'border-primary bg-purple-50'
-          : 'border-gray-200 hover:border-gray-300 bg-white'
+          ? 'border-white bg-white shadow-2xl scale-[1.02]'
+          : 'border-white/30 bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:border-white/50 shadow-lg'
       }`}
     >
-      {icon}
-      <div className="flex-1">
-        <h3 className="font-bold text-xl mb-1">{title}</h3>
-        <p className="text-gray-600 text-sm">{description}</p>
+      <div className="flex-shrink-0 animate-scale-in">
+        {icon}
       </div>
+      <div className="flex-1">
+        <h3 className={`font-bold text-xl md:text-2xl mb-2 ${selected ? 'text-primary' : 'text-white'}`}>
+          {title}
+        </h3>
+        <p className={`text-sm md:text-base ${selected ? 'text-gray-700' : 'text-white/80'}`}>
+          {description}
+        </p>
+      </div>
+      {selected && (
+        <div className="flex-shrink-0 text-3xl animate-scale-in">
+          ✅
+        </div>
+      )}
     </button>
   );
 }
 
-function PlatformCard({ name, icon: Icon, color, selected, onClick }: {
+function PlatformCard({ name, icon: Icon, color, selected, disabled, onClick }: {
   name: string;
   icon: any;
   color: string;
   selected: boolean;
+  disabled?: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`p-6 rounded-2xl border-2 transition-all ${
+      disabled={disabled}
+      className={`p-4 md:p-6 rounded-2xl border-2 transition-all duration-300 transform hover:scale-105 ${
         selected
-          ? 'border-primary bg-purple-50'
-          : 'border-gray-200 hover:border-gray-300 bg-white'
+          ? 'border-white bg-white shadow-2xl scale-105'
+          : disabled
+          ? 'border-white/20 bg-white/5 backdrop-blur-sm opacity-50 cursor-not-allowed'
+          : 'border-white/30 bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:border-white/50 shadow-lg'
       }`}
     >
-      <div className="flex flex-col items-center gap-3">
+      <div className="flex flex-col items-center gap-2 md:gap-3">
         <div 
-          className="w-16 h-16 rounded-2xl flex items-center justify-center"
-          style={{ backgroundColor: color }}
+          className={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg transition-transform ${
+            selected ? 'scale-110' : ''
+          }`}
+          style={{ backgroundColor: disabled ? '#9CA3AF' : color }}
         >
-          <Icon className="text-white text-2xl" />
+          <Icon className="text-white text-xl md:text-2xl" />
         </div>
-        <p className="text-sm font-semibold text-gray-900">{name}</p>
+        <p className={`text-xs md:text-sm font-semibold ${
+          selected ? 'text-gray-900' : 'text-white'
+        }`}>
+          {name}
+        </p>
+        {selected && (
+          <div className="absolute top-2 right-2 text-xl animate-scale-in">
+            ✅
+          </div>
+        )}
       </div>
     </button>
   );

@@ -21,6 +21,12 @@ module.exports = {
           dark: '#5C4033',
           darker: '#3D2A22',
         },
+        earth: {
+          light: '#A67C52',
+          DEFAULT: '#7D5A3F',
+          dark: '#5C4033',
+          darker: '#3D2A22',
+        },
         // Sky Blue Accent
         accent: {
           light: '#3BA0C1',
@@ -45,6 +51,7 @@ module.exports = {
         'slide-up': 'slideUp 0.5s ease-out',
         'scale-in': 'scaleIn 0.3s ease-out',
         'bounce-slow': 'bounce 2s infinite',
+        'shimmer': 'shimmer 2s infinite',
       },
       keyframes: {
         fadeIn: {
@@ -58,6 +65,10 @@ module.exports = {
         scaleIn: {
           '0%': { transform: 'scale(0.9)', opacity: '0' },
           '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
         },
       },
     },
