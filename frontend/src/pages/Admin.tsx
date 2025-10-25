@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+  import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/common/Button';
@@ -65,6 +65,7 @@ export function Admin() {
   }, [isUserDropdownOpen]);
 
   const loadMockData = () => {
+// ... loadMockData içeriği aynı
     setLinks([
       {
         id: '1',
@@ -109,6 +110,7 @@ export function Admin() {
   };
 
   const handleAddLink = () => {
+// ... handleAddLink içeriği aynı
     if (!newLink.title.trim() || !newLink.url.trim()) return;
 
     const link: Web3Link = {
@@ -128,6 +130,7 @@ export function Admin() {
   };
 
   const handleEditLink = (link: Web3Link) => {
+// ... handleEditLink içeriği aynı
     setEditingLink(link);
     setNewLink({
       title: link.title,
@@ -141,6 +144,7 @@ export function Admin() {
   };
 
   const handleUpdateLink = () => {
+// ... handleUpdateLink içeriği aynı
     if (!editingLink) return;
 
     const updatedLinks = links.map(link =>
@@ -176,7 +180,11 @@ export function Admin() {
       {/* Top Banner */}
       <div className="bg-gray-800 text-white py-2 px-4 text-center text-sm">
         <span>🌲 Try Forest Pro for free</span>
-        <button className="ml-4 bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-xs font-medium">
+        <button 
+          type="button"
+          onClick={() => window.location.href = '/upgrade'}
+          className="ml-4 bg-green-500 hover:bg-green-600 px-3 py-1 rounded text-xs font-medium cursor-pointer"
+        >
           Upgrade
         </button>
       </div>
@@ -229,7 +237,8 @@ export function Admin() {
                         setIsAddLinkModalOpen(true);
                         setIsUserDropdownOpen(false);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                      type="button" // Buton olarak işaretlendi
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors cursor-pointer" // cursor-pointer eklendi
                     >
                       <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
                         <span className="text-gray-600">+</span>
@@ -243,7 +252,8 @@ export function Admin() {
                         navigate('/account');
                         setIsUserDropdownOpen(false);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                      type="button" // Buton olarak işaretlendi
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors cursor-pointer" // cursor-pointer eklendi
                     >
                       <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
                         <span className="text-gray-600">👤</span>
@@ -252,11 +262,12 @@ export function Admin() {
                     </button>
 
                     <button 
+                      type="button"
                       onClick={() => {
-                        // Handle upgrade
+                        window.location.href = '/upgrade'; // Yönlendirme buraya eklendi
                         setIsUserDropdownOpen(false);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors cursor-pointer" // cursor-pointer eklendi
                     >
                       <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
                         <span className="text-gray-600">⚡</span>
@@ -305,22 +316,23 @@ export function Admin() {
                     activeTab === 'links' ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50'
                   }`}
                   onClick={() => setActiveTab('links')}
+                  type="button"
                 >
                   Links
                 </button>
-                <button className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
+                <button className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50" type="button">
                   NFT Gallery
                 </button>
-                <button className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
+                <button className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50" type="button">
                   DeFi Portfolio
                 </button>
-                <button className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
+                <button className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50" type="button">
                   Analytics
                 </button>
-                <button className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
+                <button className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50" type="button">
                   Audience
                 </button>
-                <button className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
+                <button className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50" type="button">
                   Insights
                 </button>
               </div>
@@ -369,15 +381,15 @@ export function Admin() {
               </div>
               
               <div className="flex items-center gap-4 mb-4">
-                <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
+                <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900" type="button">
                   <span>📱</span>
                   <span>Twitter</span>
                 </button>
-                <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
+                <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900" type="button">
                   <span>💬</span>
                   <span>Discord</span>
                 </button>
-                <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
+                <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900" type="button">
                   <span>+</span>
                 </button>
               </div>
@@ -399,9 +411,9 @@ export function Admin() {
                   Add
                 </Button>
                 <div className="flex gap-2">
-                  <button className="text-sm text-gray-600 hover:text-gray-900">Add collection</button>
+                  <button className="text-sm text-gray-600 hover:text-gray-900" type="button">Add collection</button>
                   <span className="text-gray-300">|</span>
-                  <button className="text-sm text-gray-600 hover:text-gray-900">View archive</button>
+                  <button className="text-sm text-gray-600 hover:text-gray-900" type="button">View archive</button>
                 </div>
               </div>
             </div>
@@ -420,6 +432,7 @@ export function Admin() {
                               ? 'bg-green-500 border-green-500' 
                               : 'border-gray-300'
                           }`}
+                          type="button"
                         >
                           {link.isActive && <span className="text-white text-xs">✓</span>}
                         </button>
@@ -444,12 +457,14 @@ export function Admin() {
                       <button 
                         onClick={() => handleEditLink(link)}
                         className="text-gray-400 hover:text-gray-600"
+                        type="button"
                       >
                         ✏️
                       </button>
                       <button 
                         onClick={() => handleDeleteLink(link.id)}
                         className="text-gray-400 hover:text-red-600"
+                        type="button"
                       >
                         🗑️
                       </button>
@@ -474,6 +489,7 @@ export function Admin() {
                       ? 'bg-green-500 border-green-500' 
                       : 'border-gray-300'
                   }`}
+                  type="button"
                 >
                   {true && <span className="text-white text-xs">✓</span>}
                 </button>
@@ -502,6 +518,7 @@ export function Admin() {
                   <button 
                     key={link.id}
                     className="w-full bg-gray-100 hover:bg-gray-200 rounded-lg p-3 text-left transition-colors"
+                    type="button"
                   >
                     <div className="flex items-center gap-2">
                       {link.type === 'wallet' && <span>💰</span>}
@@ -532,7 +549,7 @@ export function Admin() {
             <select
               value={newLink.type}
               onChange={(e) => setNewLink({ ...newLink, type: e.target.value as any })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="custom">Custom Link</option>
               <option value="wallet">Wallet</option>

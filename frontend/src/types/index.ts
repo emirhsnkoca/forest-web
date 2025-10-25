@@ -9,11 +9,14 @@ export interface UserProfile {
 
 export interface Link {
   id: string;
-  type: 'social' | 'custom';
+  type: 'social' | 'custom' | 'wallet' | 'nft' | 'defi';
   platform?: string;
   title: string;
   url: string;
   isActive: boolean;
+  blockchain?: string;
+  contractAddress?: string;
+  tokenId?: string;
 }
 
 export interface SocialPlatform {
