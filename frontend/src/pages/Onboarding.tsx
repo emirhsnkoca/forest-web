@@ -172,7 +172,7 @@ export function Onboarding() {
             </Button>
           </div>
         )}
-
+  
         {/* STEP 2: PLATFORM SELECTION */}
         {currentStep === 2 && (
           <div className="text-center pt-8">
