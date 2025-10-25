@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useProfile } from '../hooks/useProfile';
@@ -60,10 +60,38 @@ export function Onboarding() {
   const [platformLinks, setPlatformLinks] = useState<Record<string, string>>({});
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // SORUN BU SATIRLARDI - KALDIRILDI!
-  // Wallet bağlı olmadan buraya zaten gelinemez, bu kontrol gereksiz
-  // ve timing problemi yaratıyordu
+  const handleProfileImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    
+    if (file) {
+      // Sadece PNG ve JPG dosyalarını kabul et
+      const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Sadece PNG ve JPG dosyaları kabul edilir.');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setProfileImageUrl(result);
+      };
+      reader.onerror = (e) => {
+        console.error('FileReader error:', e);
+        alert('Dosya okuma hatası!');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
 
   const handlePlatformToggle = (platformId: string) => {
     if (selectedPlatforms.includes(platformId)) {
@@ -97,10 +125,12 @@ export function Onboarding() {
       }
     });
 
+    // DÜZELTİLMİŞ KISIM
     saveProfile({
       displayName: displayName || 'Anonymous',
       bio: bio || '',
-      profileImage: '',
+      // Seçilen resmi state'ten alıp kaydediyoruz.
+      profileImage: profileImageUrl || '',
       links,
     });
 
@@ -110,31 +140,33 @@ export function Onboarding() {
   const progressPercentage = (currentStep / totalSteps) * 100;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-pixel-green bg-forest-bg">
       {/* Progress Bar */}
-      <div className="fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50">
+      <div className="fixed top-16 left-0 right-0 h-1 bg-gray-200 z-30">
         <div
           className="h-full bg-primary transition-all duration-300"
           style={{ width: `${progressPercentage}%` }}
         />
       </div>
 
-      {/* Navigation */}
-      <div className="fixed top-4 left-0 right-0 px-6 flex justify-between items-center z-40">
-        {currentStep > 1 && (
-          <button onClick={handleBack} className="text-gray-700 hover:text-gray-900 font-medium">
-            Back
-          </button>
-        )}
-        <div className="flex-1" />
-        {currentStep < 4 && (
-          <button onClick={handleSkip} className="text-gray-700 hover:text-gray-900 font-medium">
-            Skip
-          </button>
-        )}
+      {/* Navigation Bar */}
+      <div className="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-40">
+        <div className="px-6 py-4 flex justify-between items-center">
+          {currentStep > 1 && (
+            <button onClick={handleBack} className="text-gray-700 hover:text-gray-900 font-medium px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+              ← Back
+            </button>
+          )}
+          <div className="flex-1" />
+          {currentStep < 4 && (
+            <button onClick={handleSkip} className="text-gray-700 hover:text-gray-900 font-medium px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+              Skip →
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="container mx-auto px-4 py-16 max-w-2xl">
+      <div className="container mx-auto px-4 pt-24 pb-16 max-w-2xl">
         {/* STEP 1: GOAL SELECTION */}
         {currentStep === 1 && (
           <div className="text-center pt-8">
@@ -267,23 +299,60 @@ export function Onboarding() {
             </p>
 
             <div className="max-w-lg mx-auto">
-              {/* Profile Image */}
-              <div className="flex justify-center mb-8">
-                <div className="relative">
-                  <div className="w-32 h-32 bg-gray-300 rounded-full flex items-center justify-center">
-                    {displayName ? (
-                      <span className="text-4xl font-bold text-gray-600">
-                        {displayName[0].toUpperCase()}
-                      </span>
-                    ) : (
-                      <span className="text-6xl text-gray-500">👤</span>
-                    )}
-                  </div>
-                  <button className="absolute bottom-0 right-0 w-10 h-10 bg-black rounded-full flex items-center justify-center text-white text-xl hover:bg-gray-800 transition-colors">
-                    +
-                  </button>
-                </div>
-              </div>
+                  {/* Profile Image */}
+                  <div className="flex justify-center mb-8">
+                   <div className="relative">
+                     
+                     {/* EĞER BİR RESİM SEÇİLMİŞSE, IMG ETİKETİNİ GÖSTER */}
+                     {profileImageUrl ? (
+                       <img 
+                         src={profileImageUrl} 
+                         alt="Profile" 
+                         onClick={handleImageClick}
+                         // Bu class'lar resmin doğru görünmesi için kritik
+                         className="w-32 h-32 object-cover rounded-full cursor-pointer"
+                       />
+                     ) : (
+                       // RESİM YOKSA, VARSAYILAN GRİ KUTUYU GÖSTER
+                       <div 
+                         className="w-32 h-32 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden cursor-pointer hover:bg-gray-400 transition-colors"
+                         onClick={handleImageClick}
+                       >
+                         {displayName ? (
+                           <span className="text-4xl font-bold text-gray-600">
+                             {displayName[0].toUpperCase()}
+                           </span>
+                         ) : (
+                           // Varsayılan ikon
+                           <span className="text-gray-500">
+                             {/* Buraya bir ikon koyabilirsiniz, SVG veya bir karakter */}
+                             <svg xmlns="http://www.w3.org/2000/svg" className="h-20 w-20" viewBox="0 0 20 20" fill="currentColor">
+                               <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                             </svg>
+                           </span>
+                         )}
+                       </div>
+                     )}
+ 
+                     {/* EKLEME BUTONU (+) */}
+                     <button 
+                       onClick={handleImageClick}
+                       className="absolute bottom-0 right-0 w-10 h-10 bg-black rounded-full flex items-center justify-center text-white text-xl hover:bg-gray-800 transition-colors cursor-pointer"
+                       type="button"
+                     >
+                       +
+                     </button>
+                     
+                     {/* GİZLİ DOSYA SEÇME INPUT'U */}
+                     <input
+                       ref={fileInputRef}
+                       type="file"
+                       accept="image/png,image/jpeg,image/jpg"
+                       onChange={handleProfileImageUpload}
+                       className="hidden"
+                     />
+                   </div>
+                 </div>
 
               <div className="space-y-6">
                 <Input
