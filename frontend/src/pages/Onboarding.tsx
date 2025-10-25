@@ -104,7 +104,7 @@ export function Onboarding() {
       links,
     });
 
-    navigate('/dashboard');
+    navigate('/admin');
   };
 
   const progressPercentage = (currentStep / totalSteps) * 100;

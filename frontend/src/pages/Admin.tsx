@@ -496,8 +496,8 @@ export function Admin() {
                 <p className="text-sm text-gray-600">{profileSettings.bio}</p>
               </div>
               
-              <div className="space-y-2">
-                {links.filter(link => link.isActive).slice(0, 3).map((link) => (
+              <div className="space-y-2 max-h-80 overflow-y-auto">
+                {links.filter(link => link.isActive).map((link) => (
                   <button 
                     key={link.id}
                     className="w-full bg-gray-100 hover:bg-gray-200 rounded-lg p-3 text-left transition-colors"
