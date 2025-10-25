@@ -1,20 +1,16 @@
 import { useState } from 'react';
 import { ConnectWalletModal } from '../components/auth/ConnectWalletModal';
 import { Button } from '../components/common/Button';
-import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
 
 export function Landing() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { isConnected, currentAccount } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (isConnected && currentAccount) {
-      navigate('/onboarding');
-    }
-  }, [isConnected, currentAccount, navigate]);
+  const handleWalletConnected = () => {
+    console.log('Wallet bağlandı, onboarding\'e gidiyoruz!');
+    navigate('/onboarding');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50">
@@ -106,7 +102,11 @@ export function Landing() {
         <p>&copy; 2025 Forest. Built on Sui Blockchain.</p>
       </footer>
 
-      <ConnectWalletModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <ConnectWalletModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)}
+        onConnected={handleWalletConnected}
+      />
     </div>
   );
 }
@@ -129,6 +129,7 @@ function PricingFeature({ text }: { text: string }) {
     </li>
   );
 }
+
 
 
 
