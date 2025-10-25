@@ -1,3 +1,4 @@
+import { useState, useRef } from 'react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -122,10 +123,12 @@ export function Onboarding() {
       }
     });
 
+    // DÜZELTİLMİŞ KISIM
     saveProfile({
       displayName: displayName || 'Anonymous',
       bio: bio || '',
-      profileImage: '',
+      // Seçilen resmi state'ten alıp kaydediyoruz.
+      profileImage: profileImageUrl || '',
       links,
     });
 
