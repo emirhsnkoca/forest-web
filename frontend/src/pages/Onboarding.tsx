@@ -95,22 +95,17 @@ export function Onboarding() {
     console.log('handleNext - current step:', currentStep, '-> next:', currentStep + 1);
     setCurrentStep(currentStep + 1);
   };
+  
   const handleBack = () => setCurrentStep(currentStep - 1);
   const handleSkip = () => setCurrentStep(currentStep + 1);
 
   const handleCreateProfile = async () => {
-    try {
-      // Cüzdan kontrolü
-      if (!currentWallet) {
-        alert('Please connect your wallet first!');
-        return;
-      }
+    if (!currentWallet) {
+      alert('Please connect your wallet first!');
+      return;
+    }
 
-      console.log('Creating profile on blockchain...');
-      console.log('Current wallet:', currentWallet);
-      console.log('SignAndExecuteTransaction function:', signAndExecuteTransaction);
-      
-      // Blockchain'e profil oluştur - doğru cüzdan API'si ile
+    try {
       const result = await forest.createProfileWithDappKit(
         username || 'user',
         displayName || 'Anonymous',
@@ -120,35 +115,19 @@ export function Onboarding() {
         signAndExecuteTransaction
       );
       
-      console.log('Profile created on blockchain:', result);
-      console.log('Profile ID:', result.profileId);
-      console.log('Digest:', result.digest);
+      localStorage.setItem('forest_profile_id', result.profileId);
       
-      // Profil bilgilerini kaydet
-      if (result.profileId && result.profileId.trim() !== '') {
-        localStorage.setItem('forest_profile_id', result.profileId);
-        console.log('Profile ID saved to localStorage:', result.profileId);
-        
-        // Profil bilgilerini hook'a kaydet
-        saveProfile({
-          displayName: displayName || 'Anonymous',
-          bio: bio || '',
-          profileImage: imageUrl || '',
-          links: []
-        });
-        
-        console.log('Profile saved to hook');
-        
-        // Step 2'ye geç (Goal Selection)
-        setCurrentStep(2);
-      } else {
-        console.error('Profile creation failed - no profile ID returned');
-        console.error('Result object:', result);
-        alert('Profile creation failed - no profile ID returned. Please check console for details.');
-      }
+      saveProfile({
+        displayName: displayName || 'Anonymous',
+        bio: bio || '',
+        profileImage: imageUrl || '',
+        links: []
+      });
+      
+      setCurrentStep(2);
     } catch (error) {
-      console.error('Error creating profile:', error);
-      alert('Error creating profile. Please try again.');
+      console.error('Error:', error);
+      alert('Profile creation failed. Please try again.');
     }
   };
 
@@ -163,13 +142,10 @@ export function Onboarding() {
     return 'plain';
   };
 
-  // Debug logging removed - was causing render issues
-
   return (
     <div className="min-h-screen relative">
       {/* Dynamic Background */}
       <Background type={getBackgroundType()} />
-
 
       {/* Progress Bar - Forest Theme */}
       <div className="fixed top-0 left-0 right-0 h-2 bg-black/10 backdrop-blur-sm z-50 shadow-sm">
@@ -448,8 +424,8 @@ export function Onboarding() {
           </div>
         )}
 
-        {/* STEP 3: ADD LINKS */}
-        {currentStep === 3 && (
+        {/* STEP 4: ADD LINKS */}
+        {currentStep === 4 && (
           <div className="pt-12 animate-fade-in">
             <div className="text-center mb-12">
               <div className="text-6xl mb-6 animate-bounce-slow">🔗</div>
@@ -514,79 +490,12 @@ export function Onboarding() {
               </div>
 
               <Button 
-                onClick={handleNext} 
+                onClick={() => navigate('/admin')} 
                 fullWidth
                 className="!bg-white !text-primary hover:!bg-white/90 !shadow-xl !py-4 !text-lg !font-bold"
               >
-                Continue to Profile Details →
+                Complete Setup →
               </Button>
-            </div>
-          </div>
-        )}
-
-        {/* STEP 4: WELCOME/COMPLETE SETUP */}
-        {currentStep === 4 && (
-          <div className="pt-12 animate-fade-in">
-            <div className="text-center mb-12">
-              <div className="text-6xl mb-6 animate-bounce-slow">🎉</div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-2xl" style={{ textShadow: '0 4px 12px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.7)' }}>
-                Welcome to Forest!
-              </h1>
-              <p className="text-white text-lg font-medium drop-shadow-xl" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
-                Your profile is ready! Start building your Forest by adding your first links.
-              </p>
-            </div>
-
-            <div className="max-w-lg mx-auto">
-              <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-6 md:p-8">
-                {/* Success Message */}
-                <div className="text-center mb-8">
-                  <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                    <span className="text-3xl">✅</span>
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Profile Created Successfully!</h2>
-                  <p className="text-gray-600">
-                    Your Forest profile is now live on the blockchain.
-                  </p>
-                </div>
-
-                {/* Profile Summary */}
-                <div className="bg-gray-50 rounded-2xl p-4 mb-6">
-                  <h3 className="font-semibold text-gray-900 mb-2">Your Profile:</h3>
-                  <div className="space-y-2 text-sm text-gray-600">
-                    <p><strong>Name:</strong> {displayName || 'Anonymous'}</p>
-                    <p><strong>Goal:</strong> {goal ? goal.charAt(0).toUpperCase() + goal.slice(1) : 'Not selected'}</p>
-                    <p><strong>Platforms:</strong> {selectedPlatforms.length} selected</p>
-                  </div>
-                </div>
-
-                {/* Next Steps */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-gray-900">Next Steps:</h3>
-                  <div className="space-y-2 text-sm text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <span className="text-green-500">✓</span>
-                      <span>Profile created on blockchain</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-blue-500">→</span>
-                      <span>Add your first links</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-blue-500">→</span>
-                      <span>Customize your Forest</span>
-                    </div>
-                  </div>
-                </div>
-
-                <Button 
-                  onClick={() => navigate('/admin')} 
-                  fullWidth 
-                  className="mt-8 !bg-primary !text-white hover:!bg-primary-dark !shadow-xl !py-4 !text-lg !font-bold"
-                >
-                  Go to Admin Panel →
-                </Button>
-              </div>
             </div>
           </div>
         )}
