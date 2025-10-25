@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useCurrentAccount } from '@mysten/dapp-kit';
 import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
 
@@ -14,7 +14,9 @@ interface PremiumFeatures {
 
 export function Upgrade() {
   const navigate = useNavigate();
-  const { currentAccount, isConnected } = useAuth();
+  // Mysten Labs dapp-kit hooks kullanılıyor
+  const currentAccount = useCurrentAccount();
+  const isConnected = !!currentAccount;
   
   const [hasWALLLCoin, setHasWALLLCoin] = useState(false);
   const [hasMonkeyNFT, setHasMonkeyNFT] = useState(false);

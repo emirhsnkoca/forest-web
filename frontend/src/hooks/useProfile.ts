@@ -24,7 +24,23 @@ export function useProfile(walletAddress: string | undefined) {
     return profiles[address] || null;
   };
 
-  return { profile, saveProfile, getProfileByAddress };
+  // Profile ID'yi localStorage'a kaydet (blockchain'den gelen profile ID)
+  const saveProfileId = (profileId: string) => {
+    localStorage.setItem('forest_profile_id', profileId);
+  };
+
+  // Profile ID'yi localStorage'dan al
+  const getProfileId = (): string | null => {
+    return localStorage.getItem('forest_profile_id');
+  };
+
+  return { 
+    profile, 
+    saveProfile, 
+    getProfileByAddress, 
+    saveProfileId, 
+    getProfileId 
+  };
 }
 
 

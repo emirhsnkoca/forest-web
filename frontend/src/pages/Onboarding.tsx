@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useCurrentAccount, useWallets, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { useProfile } from '../hooks/useProfile';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { Textarea } from '../components/common/Textarea';
 import { Background } from '../components/common/Background';
-import Confetti from 'react-confetti';
-import { Link } from '../types';
-import { forest, Forest } from '../forest';
+import { forest } from '../forest';
 import { 
   FaInstagram, 
   FaWhatsapp, 
@@ -56,38 +54,32 @@ const PLATFORMS: Platform[] = [
 
 export function Onboarding() {
   const navigate = useNavigate();
-  const { currentAccount } = useAuth();
+  // Mysten Labs dapp-kit hooks kullanılıyor
+  const currentAccount = useCurrentAccount();
   const { saveProfile } = useProfile(currentAccount?.address);
+  const wallets = useWallets();
+  const currentWallet = wallets.length > 0 ? wallets[0] : null;
+  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
 
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 5;
+  const totalSteps = 4;
 
   const [goal, setGoal] = useState<Goal>(null);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [platformLinks, setPlatformLinks] = useState<Record<string, string>>({});
   const [displayName, setDisplayName] = useState('');
+  const [username, setUsername] = useState('');
+  const [subdomain, setSubdomain] = useState('');
   const [bio, setBio] = useState('');
   const [imageUrl, setImageUrl] = useState('');
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [windowDimensions, setWindowDimensions] = useState({ width: window.innerWidth, height: window.innerHeight });
 
-  // Confetti effect on preview step
+  // Username değiştiğinde subdomain'i otomatik generate et
   useEffect(() => {
-    if (currentStep === 5) {
-      setShowConfetti(true);
-      const timer = setTimeout(() => setShowConfetti(false), 5000); // 5 saniye sonra dur
-      return () => clearTimeout(timer);
+    if (username) {
+      const cleanUsername = username.toLowerCase().replace(/[^a-z0-9]/g, '');
+      setSubdomain(`${cleanUsername}.forest.ee`);
     }
-  }, [currentStep]);
-
-  // Window resize için confetti boyutları
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowDimensions({ width: window.innerWidth, height: window.innerHeight });
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [username]);
 
   const handlePlatformToggle = (platformId: string) => {
     if (selectedPlatforms.includes(platformId)) {
@@ -106,58 +98,56 @@ export function Onboarding() {
   const handleBack = () => setCurrentStep(currentStep - 1);
   const handleSkip = () => setCurrentStep(currentStep + 1);
 
-  const handleFinish = async () => {
+  const handleCreateProfile = async () => {
     try {
+      // Cüzdan kontrolü
+      if (!currentWallet) {
+        alert('Please connect your wallet first!');
+        return;
+      }
+
       console.log('Creating profile on blockchain...');
+      console.log('Current wallet:', currentWallet);
+      console.log('SignAndExecuteTransaction function:', signAndExecuteTransaction);
       
-      // Blockchain'e profil oluştur
-      const result = await forest.createProfile(
+      // Blockchain'e profil oluştur - doğru cüzdan API'si ile
+      const result = await forest.createProfileWithDappKit(
+        username || 'user',
         displayName || 'Anonymous',
         bio || '',
         imageUrl || '',
-        Forest.generateKeypair() // Mock signer - gerçek implementasyonda wallet'tan alınacak
+        subdomain || 'user.forest.ee',
+        signAndExecuteTransaction
       );
       
       console.log('Profile created on blockchain:', result);
+      console.log('Profile ID:', result.profileId);
+      console.log('Digest:', result.digest);
       
-      // Link'leri de blockchain'e ekle
-      const links: Link[] = [];
-      for (const [platform, value] of Object.entries(platformLinks)) {
-        if (value.trim()) {
-          const platformData = PLATFORMS.find(p => p.id === platform);
-          const url = platformData?.urlPrefix ? platformData.urlPrefix + value.replace(/^@/, '') : value;
-          
-          // Blockchain'e link ekle
-          const linkResult = await forest.addLink(
-            result.profileId,
-            platformData?.name || platform,
-            url,
-            true,
-            Forest.generateKeypair() // Mock signer
-          );
-          
-          links.push({
-            id: linkResult.linkId,
-            type: 'social',
-            platform,
-            title: platformData?.name || platform,
-            url,
-            isActive: true,
-          });
-        }
+      // Profil bilgilerini kaydet
+      if (result.profileId && result.profileId.trim() !== '') {
+        localStorage.setItem('forest_profile_id', result.profileId);
+        console.log('Profile ID saved to localStorage:', result.profileId);
+        
+        // Profil bilgilerini hook'a kaydet
+        saveProfile({
+          displayName: displayName || 'Anonymous',
+          bio: bio || '',
+          profileImage: imageUrl || '',
+          links: []
+        });
+        
+        console.log('Profile saved to hook');
+        
+        // Step 2'ye geç (Goal Selection)
+        setCurrentStep(2);
+      } else {
+        console.error('Profile creation failed - no profile ID returned');
+        console.error('Result object:', result);
+        alert('Profile creation failed - no profile ID returned. Please check console for details.');
       }
-
-      // Local state'i de güncelle
-      saveProfile({
-        displayName: displayName || 'Anonymous',
-        bio: bio || '',
-        profileImage: imageUrl || '',
-        links,
-      });
-
-      navigate('/admin');
     } catch (error) {
-      console.error('Error creating profile on blockchain:', error);
+      console.error('Error creating profile:', error);
       alert('Error creating profile. Please try again.');
     }
   };
@@ -166,31 +156,20 @@ export function Onboarding() {
 
   // Background type değişiyor her step'te
   const getBackgroundType = (): 'pixel-earth' | 'pixel-water' | 'pixel-grass' | 'plain' => {
-    if (currentStep === 1) return 'pixel-earth'; // Goal Selection - Kahverengi toprak pixel
-    if (currentStep === 2) return 'pixel-water'; // Platform Selection - Mavi su pixel
-    if (currentStep === 3) return 'pixel-grass'; // Add Links - Yeşil çimen pixel
-    if (currentStep === 4) return 'pixel-grass'; // Profile Details - Yeşil çimen
-    if (currentStep === 5) return 'plain'; // Preview - Sade beyaz
+    if (currentStep === 1) return 'pixel-grass'; // Profile Creation - Yeşil çimen pixel
+    if (currentStep === 2) return 'pixel-earth'; // Goal Selection - Kahverengi toprak pixel
+    if (currentStep === 3) return 'pixel-water'; // Platform Selection - Mavi su pixel
+    if (currentStep === 4) return 'pixel-grass'; // Welcome/Complete Setup - Yeşil çimen
     return 'plain';
   };
 
   // Debug logging removed - was causing render issues
 
   return (
-    <div className="min-h-screen relative" style={currentStep === 5 ? { backgroundColor: 'white' } : undefined}>
-      {/* Dynamic Background - disabled for Step 5 to avoid render issues */}
-      {currentStep !== 5 && <Background type={getBackgroundType()} />}
+    <div className="min-h-screen relative">
+      {/* Dynamic Background */}
+      <Background type={getBackgroundType()} />
 
-      {/* Confetti Effect - temporarily disabled to test */}
-      {false && showConfetti && (
-        <Confetti
-          width={windowDimensions.width}
-          height={windowDimensions.height}
-          colors={['#4A7C25', '#6B9F3D', '#7D5A3F', '#2A7F99', '#3BA0C1']}
-          numberOfPieces={200}
-          recycle={false}
-        />
-      )}
 
       {/* Progress Bar - Forest Theme */}
       <div className="fixed top-0 left-0 right-0 h-2 bg-black/10 backdrop-blur-sm z-50 shadow-sm">
@@ -239,8 +218,138 @@ export function Onboarding() {
       </div>
 
       <div className="container mx-auto px-4 py-16 max-w-2xl relative z-10">
-        {/* STEP 1: GOAL SELECTION */}
+        {/* STEP 1: PROFILE CREATION */}
         {currentStep === 1 && (
+          <div className="pt-12 animate-fade-in">
+            <div className="text-center mb-12">
+              <div className="text-6xl mb-6 animate-bounce-slow">✨</div>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-2xl" style={{ textShadow: '0 4px 12px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.7)' }}>
+                Create your profile
+              </h1>
+              <p className="text-white text-lg font-medium drop-shadow-xl" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
+                Personalize your Forest profile with your image, name, and bio.
+              </p>
+            </div>
+
+            <div className="max-w-lg mx-auto">
+              <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-6 md:p-8">
+                {/* Profile Image */}
+                <div className="flex justify-center mb-8">
+                  <div className="relative group">
+                    <div className="w-32 h-32 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-2xl ring-4 ring-white/50 transition-transform group-hover:scale-105">
+                      {displayName ? (
+                        <span className="text-5xl font-bold text-white">
+                          {displayName[0].toUpperCase()}
+                        </span>
+                      ) : (
+                        <span className="text-6xl">👤</span>
+                      )}
+                    </div>
+                    <button className="absolute bottom-0 right-0 w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white text-2xl hover:bg-primary-dark transition-all shadow-lg hover:scale-110 ring-4 ring-white">
+                      📷
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-primary mb-2">
+                      Username *
+                    </label>
+                    <Input
+                      placeholder="Enter your username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className="!border-2 !border-primary/20 focus:!border-primary"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      This will be your unique identifier
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-primary mb-2">
+                      Subdomain
+                    </label>
+                    <Input
+                      placeholder="username.forest.ee"
+                      value={subdomain}
+                      onChange={(e) => setSubdomain(e.target.value)}
+                      className="!border-2 !border-primary/20 focus:!border-primary"
+                      readOnly
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Your Forest subdomain (auto-generated)
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-primary mb-2">
+                      Display Name *
+                    </label>
+                    <Input
+                      placeholder="Enter your name"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      className="!border-2 !border-primary/20 focus:!border-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-primary mb-2">
+                      Bio
+                    </label>
+                    <Textarea
+                      placeholder="Tell the world about yourself..."
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      rows={4}
+                      maxLength={160}
+                      className="!border-2 !border-primary/20 focus:!border-primary resize-none"
+                    />
+                    <div className="flex justify-between items-center mt-2">
+                      <p className="text-xs text-gray-500">
+                        Optional, but recommended
+                      </p>
+                      <p className={`text-sm font-medium ${
+                        bio.length > 150 ? 'text-red-500' : 'text-primary'
+                      }`}>
+                        {bio.length}/160
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-primary mb-2">
+                      Profile Image URL
+                    </label>
+                    <Input
+                      placeholder="https://example.com/your-image.jpg"
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      className="!border-2 !border-primary/20 focus:!border-primary"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Optional: Add a link to your profile image
+                    </p>
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={handleCreateProfile} 
+                  disabled={!username.trim() || !displayName.trim() || !currentWallet}
+                  fullWidth 
+                  className="mt-8 !bg-primary !text-white hover:!bg-primary-dark !shadow-xl !py-4 !text-lg !font-bold disabled:!opacity-50 disabled:!cursor-not-allowed"
+                >
+                  {!currentWallet ? 'Connect Wallet First' : 'Create My Profile →'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+  
+        {/* STEP 2: GOAL SELECTION */}
+        {currentStep === 2 && (
           <div className="text-center pt-12 animate-fade-in">
             {/* Forest Icon */}
             <div className="text-7xl mb-6 animate-bounce-slow">🌲</div>
@@ -298,9 +407,9 @@ export function Onboarding() {
             </Button>
           </div>
         )}
-  
-        {/* STEP 2: PLATFORM SELECTION */}
-        {currentStep === 2 && (
+
+        {/* STEP 3: PLATFORM SELECTION */}
+        {currentStep === 3 && (
           <div className="text-center pt-12 animate-fade-in">
             <div className="text-6xl mb-6 animate-bounce-slow">🌊</div>
             
@@ -415,186 +524,73 @@ export function Onboarding() {
           </div>
         )}
 
-        {/* STEP 4: PROFILE DETAILS */}
+        {/* STEP 4: WELCOME/COMPLETE SETUP */}
         {currentStep === 4 && (
           <div className="pt-12 animate-fade-in">
             <div className="text-center mb-12">
-              <div className="text-6xl mb-6 animate-bounce-slow">✨</div>
+              <div className="text-6xl mb-6 animate-bounce-slow">🎉</div>
               <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-2xl" style={{ textShadow: '0 4px 12px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.7)' }}>
-                Add profile details
+                Welcome to Forest!
               </h1>
               <p className="text-white text-lg font-medium drop-shadow-xl" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
-                Personalize your Forest profile with your image, name, and bio.
+                Your profile is ready! Start building your Forest by adding your first links.
               </p>
             </div>
 
             <div className="max-w-lg mx-auto">
               <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-6 md:p-8">
-                {/* Profile Image */}
-                <div className="flex justify-center mb-8">
-                  <div className="relative group">
-                    <div className="w-32 h-32 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-2xl ring-4 ring-white/50 transition-transform group-hover:scale-105">
-                      {displayName ? (
-                        <span className="text-5xl font-bold text-white">
-                          {displayName[0].toUpperCase()}
-                        </span>
-                      ) : (
-                        <span className="text-6xl">👤</span>
-                      )}
-                    </div>
-                    <button className="absolute bottom-0 right-0 w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white text-2xl hover:bg-primary-dark transition-all shadow-lg hover:scale-110 ring-4 ring-white">
-                      📷
-                    </button>
+                {/* Success Message */}
+                <div className="text-center mb-8">
+                  <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <span className="text-3xl">✅</span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Profile Created Successfully!</h2>
+                  <p className="text-gray-600">
+                    Your Forest profile is now live on the blockchain.
+                  </p>
+                </div>
+
+                {/* Profile Summary */}
+                <div className="bg-gray-50 rounded-2xl p-4 mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-2">Your Profile:</h3>
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <p><strong>Name:</strong> {displayName || 'Anonymous'}</p>
+                    <p><strong>Goal:</strong> {goal ? goal.charAt(0).toUpperCase() + goal.slice(1) : 'Not selected'}</p>
+                    <p><strong>Platforms:</strong> {selectedPlatforms.length} selected</p>
                   </div>
                 </div>
 
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-primary mb-2">
-                      Display Name *
-                    </label>
-                    <Input
-                      placeholder="Enter your name"
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      className="!border-2 !border-primary/20 focus:!border-primary"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-primary mb-2">
-                      Bio
-                    </label>
-                    <Textarea
-                      placeholder="Tell the world about yourself..."
-                      value={bio}
-                      onChange={(e) => setBio(e.target.value)}
-                      rows={4}
-                      maxLength={160}
-                      className="!border-2 !border-primary/20 focus:!border-primary resize-none"
-                    />
-                    <div className="flex justify-between items-center mt-2">
-                      <p className="text-xs text-gray-500">
-                        Optional, but recommended
-                      </p>
-                      <p className={`text-sm font-medium ${
-                        bio.length > 150 ? 'text-red-500' : 'text-primary'
-                      }`}>
-                        {bio.length}/160
-                      </p>
+                {/* Next Steps */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-gray-900">Next Steps:</h3>
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <span className="text-green-500">✓</span>
+                      <span>Profile created on blockchain</span>
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-primary mb-2">
-                      Profile Image URL
-                    </label>
-                    <Input
-                      placeholder="https://example.com/your-image.jpg"
-                      value={imageUrl}
-                      onChange={(e) => setImageUrl(e.target.value)}
-                      className="!border-2 !border-primary/20 focus:!border-primary"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Optional: Add a link to your profile image
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-500">→</span>
+                      <span>Add your first links</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-500">→</span>
+                      <span>Customize your Forest</span>
+                    </div>
                   </div>
                 </div>
 
                 <Button 
-                  onClick={handleNext} 
+                  onClick={() => navigate('/admin')} 
                   fullWidth 
                   className="mt-8 !bg-primary !text-white hover:!bg-primary-dark !shadow-xl !py-4 !text-lg !font-bold"
                 >
-                  Preview My Profile →
+                  Go to Admin Panel →
                 </Button>
               </div>
             </div>
           </div>
         )}
 
-        {/* STEP 5: PREVIEW */}
-        {currentStep === 5 && (
-          <div style={{ paddingTop: '32px', textAlign: 'center', minHeight: '100vh', backgroundColor: 'white' }}>
-            <div style={{ fontSize: '72px', marginBottom: '16px' }}>🎉</div>
-            <h1 style={{ fontSize: '48px', fontWeight: 'bold', marginBottom: '16px', color: '#1F2937' }}>
-              Looking good!
-            </h1>
-            <p style={{ color: '#6B7280', marginBottom: '16px' }}>
-              Your Forest profile is off to a great start.
-            </p>
-            <p style={{ color: '#6B7280', marginBottom: '48px' }}>
-              Continue building to make it even better.
-            </p>
-
-            <div style={{ maxWidth: '384px', margin: '0 auto 48px' }}>
-              <div style={{ backgroundColor: '#F3F4F6', borderRadius: '48px', padding: '16px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
-                <div style={{ backgroundColor: 'white', borderRadius: '40px', padding: '24px', minHeight: '600px' }}>
-                  <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                    <div style={{ width: '80px', height: '80px', backgroundColor: '#D1D5DB', borderRadius: '50%', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {displayName ? (
-                        <span style={{ fontSize: '32px', fontWeight: 'bold', color: '#4B5563' }}>
-                          {displayName[0].toUpperCase()}
-                        </span>
-                      ) : (
-                        <span style={{ fontSize: '48px' }}>👤</span>
-                      )}
-                    </div>
-                    <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#4A7C25', marginBottom: '8px' }}>
-                      {displayName || 'Your Name'}
-                    </h2>
-                    {bio && <p style={{ fontSize: '14px', color: '#4B5563', marginBottom: '16px' }}>{bio}</p>}
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {selectedPlatforms.slice(0, 3).map((platformId) => {
-                      const platform = PLATFORMS.find(p => p.id === platformId);
-                      if (!platform) return null;
-                      
-                      return (
-                        <div
-                          key={platformId}
-                          style={{ 
-                            padding: '16px', 
-                            borderRadius: '12px', 
-                            backgroundColor: platform.color,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px'
-                          }}
-                        >
-                          <span style={{ color: 'white', fontWeight: '600', fontSize: '18px' }}>
-                            {platform.name}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <button 
-              onClick={handleFinish}
-              style={{
-                width: '100%',
-                maxWidth: '448px',
-                margin: '0 auto',
-                display: 'block',
-                padding: '12px 24px',
-                borderRadius: '9999px',
-                fontWeight: '600',
-                backgroundColor: '#4A7C25',
-                color: 'white',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '16px'
-              }}
-            >
-              Continue building this Linktree
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
