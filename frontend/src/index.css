@@ -2,10 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==================== CSS Variables ==================== */
+:root {
+  /* Forest Colors */
+  --color-primary: #4A7C25;
+  --color-primary-light: #6B9F3D;
+  --color-primary-dark: #2D5016;
+  
+  --color-secondary: #7D5A3F;
+  --color-secondary-light: #A67C52;
+  --color-secondary-dark: #5C4033;
+  
+  --color-accent: #2A7F99;
+  --color-accent-light: #3BA0C1;
+  --color-accent-dark: #1E5F74;
+  
+  /* Backgrounds */
+  --bg-forest: #F5F9F0;
+  --bg-earth: #E8DDD0;
+  
+  /* Spacing */
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 1rem;
+  --spacing-md: 1.5rem;
+  --spacing-lg: 2rem;
+  --spacing-xl: 3rem;
+  
+  /* Border Radius */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  
+  /* Transitions */
+  --transition-fast: 150ms ease-in-out;
+  --transition-base: 250ms ease-in-out;
+  --transition-slow: 400ms ease-in-out;
+}
+
+/* ==================== Global Resets ==================== */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
@@ -14,6 +64,109 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-forest);
+  color: #1f2937;
+}
+
+/* ==================== Custom Scrollbar ==================== */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-earth);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-secondary);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--bg-earth);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-secondary-dark);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-secondary) var(--bg-earth);
+}
+
+/* ==================== Smooth Transitions ==================== */
+a, button, input, textarea, select {
+  transition: all var(--transition-base);
+}
+
+/* ==================== Focus States ==================== */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ==================== Selection ==================== */
+::selection {
+  background-color: var(--color-primary-light);
+  color: white;
+}
+
+::-moz-selection {
+  background-color: var(--color-primary-light);
+  color: white;
+}
+
+/* ==================== Utility Classes ==================== */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .animate-delay-100 {
+    animation-delay: 100ms;
+  }
+  
+  .animate-delay-200 {
+    animation-delay: 200ms;
+  }
+  
+  .animate-delay-300 {
+    animation-delay: 300ms;
+  }
+  
+  .animate-delay-400 {
+    animation-delay: 400ms;
+  }
+  
+  .animate-delay-500 {
+    animation-delay: 500ms;
+  }
+}
+
+/* ==================== Custom Components ==================== */
+@layer components {
+  .btn-forest {
+    @apply bg-primary hover:bg-primary-dark text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg;
+  }
+  
+  .btn-earth {
+    @apply bg-secondary hover:bg-secondary-dark text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg;
+  }
+  
+  .card-forest {
+    @apply bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1;
+  }
+  
+  .input-forest {
+    @apply w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all;
+  }
 }
 
 
