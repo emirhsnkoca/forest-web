@@ -1,64 +1,5 @@
 // Mock Forest - localStorage tabanlı çalışan versiyon
-// Gerçek blockchain işlemleri yerine localStorage kullanır
-
-// Types for our smart contract - Move koduna uygun
-export interface Profile {
-  id: string;
-  owner: string;
-  username: string;
-  display_name: string;
-  bio: string;
-  image_url: string;
-  subdomain: string;
-  link_ids: number[];
-  next_link_id: number;
-  link_count: number;
-}
-
-export interface Link {
-  id: number;
-  title: string;
-  url: string;
-  icon: string;
-  banner: string;
-  is_active: boolean;
-  order: number;
-}
-
-export interface ProfileCreatedEvent {
-  profile_id: string;
-  owner: string;
-  username: string;
-  subdomain: string;
-}
-
-export interface ProfileUpdatedEvent {
-  profile_id: string;
-  display_name: string;
-}
-
-export interface ProfileImageUpdatedEvent {
-  profile_id: string;
-  image_url: string;
-}
-
-export interface LinkAddedEvent {
-  profile_id: string;
-  link_id: number;
-  title: string;
-  url: string;
-}
-
-export interface LinkUpdatedEvent {
-  profile_id: string;
-  link_id: number;
-  title: string;
-}
-
-export interface LinkDeletedEvent {
-  profile_id: string;
-  link_id: number;
-}
+import { Profile, Link, ProfileCreatedEvent, LinkAddedEvent, LinkDeletedEvent, LinkUpdatedEvent } from './forest';
 
 // Mock data için localStorage key'leri
 const PROFILES_KEY = 'forest_mock_profiles';
@@ -66,7 +7,7 @@ const LINKS_KEY = 'forest_mock_links';
 const NEXT_ID_KEY = 'forest_mock_next_id';
 
 // Mock Forest class for localStorage integration
-export class Forest {
+export class MockForest {
   private profiles: Map<string, Profile> = new Map();
   private links: Map<string, Link[]> = new Map();
   private nextId: number = 1;
@@ -118,7 +59,7 @@ export class Forest {
     bio: string,
     imageUrl: string,
     subdomain: string,
-    _signAndExecuteTransaction?: any
+    signAndExecuteTransaction: any
   ): Promise<{ digest: string; profileId: string }> {
     console.log('🌲 Mock Forest: Creating profile:', { username, displayName, bio, imageUrl, subdomain });
 
@@ -158,7 +99,7 @@ export class Forest {
     profileId: string,
     displayName: string,
     bio: string,
-    _signAndExecuteTransaction?: any
+    signAndExecuteTransaction: any
   ): Promise<{ digest: string }> {
     console.log('🌲 Mock Forest: Updating profile:', profileId);
 
@@ -181,7 +122,7 @@ export class Forest {
   async updateProfileImageWithDappKit(
     profileId: string,
     imageUrl: string,
-    _signAndExecuteTransaction?: any
+    signAndExecuteTransaction: any
   ): Promise<{ digest: string }> {
     console.log('🌲 Mock Forest: Updating profile image:', profileId);
 
@@ -203,7 +144,7 @@ export class Forest {
   async updateSubdomainWithDappKit(
     profileId: string,
     subdomain: string,
-    _signAndExecuteTransaction?: any
+    signAndExecuteTransaction: any
   ): Promise<{ digest: string }> {
     console.log('🌲 Mock Forest: Updating subdomain:', profileId);
 
@@ -228,7 +169,7 @@ export class Forest {
     url: string,
     icon: string,
     banner: string,
-    _signAndExecuteTransaction?: any
+    signAndExecuteTransaction: any
   ): Promise<{ digest: string; linkId: number }> {
     console.log('🌲 Mock Forest: Adding link:', { profileId, title, url, icon, banner });
 
@@ -271,7 +212,7 @@ export class Forest {
   async deleteLinkWithDappKit(
     profileId: string,
     linkId: number,
-    _signAndExecuteTransaction?: any
+    signAndExecuteTransaction: any
   ): Promise<{ digest: string }> {
     console.log('🌲 Mock Forest: Deleting link:', { profileId, linkId });
 
@@ -305,7 +246,7 @@ export class Forest {
     url: string,
     icon: string,
     banner: string,
-    _signAndExecuteTransaction?: any
+    signAndExecuteTransaction: any
   ): Promise<{ digest: string }> {
     console.log('🌲 Mock Forest: Updating link:', { profileId, linkId, title, url, icon, banner });
 
@@ -344,7 +285,7 @@ export class Forest {
     profileId: string,
     linkId: number,
     isActive: boolean,
-    _signAndExecuteTransaction?: any
+    signAndExecuteTransaction: any
   ): Promise<{ digest: string }> {
     console.log('🌲 Mock Forest: Toggling link:', { profileId, linkId, isActive });
 
@@ -374,7 +315,7 @@ export class Forest {
     profileId: string,
     linkId: number,
     newOrder: number,
-    _signAndExecuteTransaction?: any
+    signAndExecuteTransaction: any
   ): Promise<{ digest: string }> {
     console.log('🌲 Mock Forest: Reordering link:', { profileId, linkId, newOrder });
 
@@ -404,7 +345,7 @@ export class Forest {
     console.log('🌲 Mock Forest: Searching profile by owner:', ownerAddress);
 
     // Mock owner address ile eşleşen profili bul
-    for (const [, profile] of this.profiles) {
+    for (const [profileId, profile] of this.profiles) {
       if (profile.owner === ownerAddress) {
         console.log('✅ Mock Forest: Found profile:', profile);
         return profile;
@@ -458,7 +399,7 @@ export class Forest {
 
   // Event dinleyiciler (mock - gerçek event'ler yerine callback'ler)
   async listenForProfileCreated(
-    _callback: (event: ProfileCreatedEvent) => void
+    callback: (event: ProfileCreatedEvent) => void
   ): Promise<() => void> {
     console.log('🌲 Mock Forest: ProfileCreated listener registered');
     // Mock event listener - gerçek implementasyon gerekirse
@@ -466,7 +407,7 @@ export class Forest {
   }
 
   async listenForLinkAdded(
-    _callback: (event: LinkAddedEvent) => void
+    callback: (event: LinkAddedEvent) => void
   ): Promise<() => void> {
     console.log('🌲 Mock Forest: LinkAdded listener registered');
     // Mock event listener - gerçek implementasyon gerekirse
@@ -474,7 +415,7 @@ export class Forest {
   }
 
   async listenForLinkDeleted(
-    _callback: (event: LinkDeletedEvent) => void
+    callback: (event: LinkDeletedEvent) => void
   ): Promise<() => void> {
     console.log('🌲 Mock Forest: LinkDeleted listener registered');
     // Mock event listener - gerçek implementasyon gerekirse
@@ -508,39 +449,7 @@ export class Forest {
       nextId: this.nextId
     };
   }
-
-  // Mock data'yı import et
-  importMockData(data: any) {
-    try {
-      // Profiles'ı import et
-      if (data.profiles) {
-        this.profiles.clear();
-        Object.entries(data.profiles).forEach(([key, profile]: [string, any]) => {
-          this.profiles.set(key, profile);
-        });
-      }
-
-      // Links'leri import et
-      if (data.links) {
-        this.links.clear();
-        Object.entries(data.links).forEach(([key, links]: [string, any]) => {
-          this.links.set(key, links);
-        });
-      }
-
-      // Next ID'yi import et
-      if (data.nextId) {
-        this.nextId = data.nextId;
-      }
-
-      this.saveToStorage();
-      console.log('🌲 Mock Forest: Data imported successfully');
-    } catch (error) {
-      console.error('🌲 Mock Forest: Error importing data:', error);
-      throw error;
-    }
-  }
 }
 
 // Export a default instance
-export const forest = new Forest();
+export const mockForest = new MockForest();

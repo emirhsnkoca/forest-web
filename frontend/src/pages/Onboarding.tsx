@@ -1,33 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCurrentAccount, useWallets, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
+import { useCurrentAccount } from '@mysten/dapp-kit';
 import { useProfile } from '../hooks/useProfile';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { Textarea } from '../components/common/Textarea';
 import { Background } from '../components/common/Background';
 import { forest } from '../forest';
-import { 
-  FaInstagram, 
-  FaWhatsapp, 
-  FaTiktok, 
-  FaYoutube, 
-  FaSpotify, 
-  FaFacebook, 
-  FaSnapchat, 
-  FaPinterest,
-  FaThreads,
-  FaGlobe,
-  FaTelegram
-} from 'react-icons/fa6';
-import { FaXTwitter } from 'react-icons/fa6';
+// Platform listesi bu dosyada tanımlı
+// Icon'lar artık emoji string olarak kullanılıyor
 
 type Goal = 'creator' | 'business' | 'personal' | null;
 
 interface Platform {
   id: string;
   name: string;
-  icon: any;
+  icon: string;
   color: string;
   placeholder: string;
   urlPrefix?: string;
@@ -35,21 +23,21 @@ interface Platform {
 
 const PLATFORMS: Platform[] = [
   // Row 1
-  { id: 'twitter', name: 'X', icon: FaXTwitter, color: '#000000', placeholder: '@username', urlPrefix: 'https://x.com/' },
-  { id: 'telegram', name: 'Telegram', icon: FaTelegram, color: '#0088CC', placeholder: '@username', urlPrefix: 'https://t.me/' },
-  { id: 'youtube', name: 'YouTube', icon: FaYoutube, color: '#FF0000', placeholder: 'Channel URL', urlPrefix: '' },
+  { id: 'twitter', name: 'X', icon: '𝕏', color: '#000000', placeholder: '@username', urlPrefix: 'https://x.com/' },
+  { id: 'telegram', name: 'Telegram', icon: '📱', color: '#0088CC', placeholder: '@username', urlPrefix: 'https://t.me/' },
+  { id: 'youtube', name: 'YouTube', icon: '📺', color: '#FF0000', placeholder: 'Channel URL', urlPrefix: '' },
   // Row 2
-  { id: 'instagram', name: 'Instagram', icon: FaInstagram, color: '#E4405F', placeholder: '@username', urlPrefix: 'https://instagram.com/' },
-  { id: 'website', name: 'Personal Website', icon: FaGlobe, color: '#4A7C25', placeholder: 'URL', urlPrefix: '' },
-  { id: 'spotify', name: 'Spotify', icon: FaSpotify, color: '#1DB954', placeholder: 'Artist URL', urlPrefix: '' },
+  { id: 'instagram', name: 'Instagram', icon: '📷', color: '#E4405F', placeholder: '@username', urlPrefix: 'https://instagram.com/' },
+  { id: 'website', name: 'Personal Website', icon: '🌐', color: '#4A7C25', placeholder: 'URL', urlPrefix: '' },
+  { id: 'spotify', name: 'Spotify', icon: '🎵', color: '#1DB954', placeholder: 'Artist URL', urlPrefix: '' },
   // Row 3
-  { id: 'whatsapp', name: 'WhatsApp', icon: FaWhatsapp, color: '#25D366', placeholder: 'Phone number', urlPrefix: 'https://wa.me/' },
-  { id: 'facebook', name: 'Facebook', icon: FaFacebook, color: '#1877F2', placeholder: 'Profile URL', urlPrefix: '' },
-  { id: 'tiktok', name: 'TikTok', icon: FaTiktok, color: '#000000', placeholder: '@username', urlPrefix: 'https://tiktok.com/@' },
+  { id: 'whatsapp', name: 'WhatsApp', icon: '💬', color: '#25D366', placeholder: 'Phone number', urlPrefix: 'https://wa.me/' },
+  { id: 'facebook', name: 'Facebook', icon: '👥', color: '#1877F2', placeholder: 'Profile URL', urlPrefix: '' },
+  { id: 'tiktok', name: 'TikTok', icon: '🎭', color: '#000000', placeholder: '@username', urlPrefix: 'https://tiktok.com/@' },
   // Row 4
-  { id: 'pinterest', name: 'Pinterest', icon: FaPinterest, color: '#E60023', placeholder: 'Profile URL', urlPrefix: '' },
-  { id: 'threads', name: 'Threads', icon: FaThreads, color: '#000000', placeholder: '@username', urlPrefix: 'https://threads.net/@' },
-  { id: 'snapchat', name: 'Snapchat', icon: FaSnapchat, color: '#FFFC00', placeholder: '@username', urlPrefix: '' },
+  { id: 'pinterest', name: 'Pinterest', icon: '📌', color: '#E60023', placeholder: 'Profile URL', urlPrefix: '' },
+  { id: 'threads', name: 'Threads', icon: '🧵', color: '#000000', placeholder: '@username', urlPrefix: 'https://threads.net/@' },
+  { id: 'snapchat', name: 'Snapchat', icon: '👻', color: '#FFFC00', placeholder: '@username', urlPrefix: '' },
 ];
 
 export function Onboarding() {
@@ -57,9 +45,10 @@ export function Onboarding() {
   // Mysten Labs dapp-kit hooks kullanılıyor
   const currentAccount = useCurrentAccount();
   const { saveProfile } = useProfile(currentAccount?.address);
-  const wallets = useWallets();
-  const currentWallet = wallets.length > 0 ? wallets[0] : null;
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  // Mock Forest kullanıyoruz, cüzdan hooks'ları gerekli değil
+  // const wallets = useWallets();
+  // const currentWallet = wallets.length > 0 ? wallets[0] : null;
+  // const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
 
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
@@ -101,11 +90,7 @@ export function Onboarding() {
   const handleSkip = () => setCurrentStep(currentStep + 1);
 
   const handleCreateProfile = async () => {
-    if (!currentWallet) {
-      alert('Please connect your wallet first!');
-      return;
-    }
-
+    // Mock Forest kullanıyoruz, cüzdan kontrolü gerekli değil
     try {
       console.log('🔍 Onboarding: Creating profile with data:', {
         username: username || 'user',
@@ -121,12 +106,13 @@ export function Onboarding() {
         bio || '',
         imageUrl || '',
         subdomain || 'user.forest.ee',
-        signAndExecuteTransaction
+        null // Mock Forest için signAndExecuteTransaction gerekli değil
       );
       
       console.log('✅ Onboarding: Profile created successfully:', result);
+      
+      // Profil ID'yi localStorage'a kaydet
       localStorage.setItem('forest_profile_id', result.profileId);
-      console.log('💾 Onboarding: Profile ID saved to localStorage:', result.profileId);
       
       // Kullanıcı bilgilerini localStorage'a kaydet
       localStorage.setItem('forest_user_data', JSON.stringify({
@@ -157,17 +143,10 @@ export function Onboarding() {
   const handleCompleteSetup = async () => {
     console.log('Complete Setup clicked - navigating to admin...');
     
-    // Profil oluşturma işlemini tamamla
-    if (!currentWallet) {
-      alert('Please connect your wallet first!');
-      return;
-    }
-
+    // Mock Forest kullanıyoruz, cüzdan kontrolü gerekli değil
     try {
-      // Eğer profil henüz oluşturulmamışsa oluştur
-      const storedProfileId = localStorage.getItem('forest_profile_id');
-      if (!storedProfileId || storedProfileId.startsWith('temp_')) {
-        console.log('🔍 Onboarding: Creating new profile...');
+      // Profil oluştur
+      console.log('🔍 Onboarding: Creating new profile...');
         
         const result = await forest.createProfileWithDappKit(
           username || 'user',
@@ -175,11 +154,42 @@ export function Onboarding() {
           bio || '',
           imageUrl || '',
           subdomain || 'user.forest.ee',
-          signAndExecuteTransaction
+          null // Mock Forest için signAndExecuteTransaction gerekli değil
         );
         
-        console.log('✅ Onboarding: Profile created, saving ID:', result.profileId);
+        console.log('✅ Onboarding: Profile created with ID:', result.profileId);
+        
+        // Profil ID'yi localStorage'a kaydet
         localStorage.setItem('forest_profile_id', result.profileId);
+        
+        // Seçilen platformları mock link olarak ekle
+        console.log('🔍 Onboarding: Adding selected platforms as links...');
+        console.log('🔍 Onboarding: Profile ID:', result.profileId);
+        console.log('🔍 Onboarding: Selected platforms:', selectedPlatforms);
+        console.log('🔍 Onboarding: Platform links:', platformLinks);
+        
+        // Seçilen platformları mock link olarak ekle
+        for (const platformId of selectedPlatforms) {
+          const platform = PLATFORMS.find(p => p.id === platformId);
+          const platformLink = platformLinks[platformId];
+          
+          if (platform && platformLink) {
+            try {
+              console.log(`🔍 Onboarding: Adding ${platform.name} link:`, platformLink);
+              await forest.addLinkWithDappKit(
+                result.profileId,
+                platform.name,
+                platformLink,
+                platform.icon,
+                '', // banner boş
+                null // Mock Forest için signAndExecuteTransaction gerekli değil
+              );
+              console.log(`✅ Onboarding: ${platform.name} link added successfully`);
+            } catch (linkError) {
+              console.error(`❌ Onboarding: Error adding ${platform.name} link:`, linkError);
+            }
+          }
+        }
         
         saveProfile({
           displayName: displayName || 'Anonymous',
@@ -187,9 +197,6 @@ export function Onboarding() {
           profileImage: imageUrl || '',
           links: []
         });
-      } else {
-        console.log('✅ Onboarding: Profile already exists:', storedProfileId);
-      }
       
       // Admin sayfasına yönlendir
       navigate('/admin');
@@ -382,11 +389,11 @@ export function Onboarding() {
 
                 <Button 
                   onClick={handleCreateProfile} 
-                  disabled={!username.trim() || !displayName.trim() || !currentWallet}
+                  disabled={!username.trim() || !displayName.trim()}
                   fullWidth 
                   className="mt-8 !bg-primary !text-white hover:!bg-primary-dark !shadow-xl !py-4 !text-lg !font-bold disabled:!opacity-50 disabled:!cursor-not-allowed"
                 >
-                  {!currentWallet ? 'Connect Wallet First' : 'Create My Profile →'}
+                  Create My Profile →
                 </Button>
               </div>
             </div>
@@ -516,15 +523,13 @@ export function Onboarding() {
                   {selectedPlatforms.map((platformId) => {
                     const platform = PLATFORMS.find(p => p.id === platformId);
                     if (!platform) return null;
-                    const Icon = platform.icon;
-                    
                     return (
                       <div key={platformId} className="flex items-center gap-3 animate-slide-up">
                         <div 
                           className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 shadow-xl ring-2 ring-white"
                           style={{ backgroundColor: platform.color }}
                         >
-                          <Icon className="text-white text-2xl" />
+                          <span className="text-white text-2xl">{platform.icon}</span>
                         </div>
                         <Input
                           placeholder={platform.placeholder}
@@ -549,7 +554,7 @@ export function Onboarding() {
                 </h3>
                 <div className="flex items-center gap-3">
                   <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center flex-shrink-0 shadow-xl ring-2 ring-white">
-                    <FaGlobe className="text-white text-2xl" />
+                    <span className="text-white text-2xl">🌐</span>
                   </div>
                   <Input 
                     placeholder="https://yourwebsite.com" 
@@ -610,9 +615,9 @@ function GoalCard({ icon, title, description, selected, onClick }: {
   );
 }
 
-function PlatformCard({ name, icon: Icon, color, selected, disabled, onClick }: {
+function PlatformCard({ name, icon, color, selected, disabled, onClick }: {
   name: string;
-  icon: any;
+  icon: string;
   color: string;
   selected: boolean;
   disabled?: boolean;
@@ -638,7 +643,7 @@ function PlatformCard({ name, icon: Icon, color, selected, disabled, onClick }: 
           }`}
           style={{ backgroundColor: disabled ? '#9CA3AF' : color }}
         >
-          <Icon className="text-white text-2xl md:text-3xl" />
+          <span className="text-white text-2xl md:text-3xl">{icon}</span>
         </div>
         <p className={`text-xs md:text-sm font-semibold ${
           selected ? 'text-gray-900' : 'text-white drop-shadow-lg'

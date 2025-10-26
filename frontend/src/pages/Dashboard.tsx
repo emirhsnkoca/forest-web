@@ -33,7 +33,7 @@ export function Dashboard() {
           return;
         }
 
-        // Profile'ı blockchain'den çek - sadece onchain veri
+        // Profile'ı mock data'dan çek
         const profileData = await forest.getProfile(storedProfileId);
         
         if (!profileData) {
@@ -41,7 +41,7 @@ export function Dashboard() {
           return;
         }
 
-        // Link'leri çek
+        // Link'leri mock data'dan çek
         const profileLinks = await forest.getProfileLinks(storedProfileId);
         
         setProfile(profileData);

@@ -1,9 +1,26 @@
-import { useState, useEffect } from 'react';
-import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
 import { Input } from '../components/common/Input';
 import { forest } from '../forest';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface Web3Link {
   id: number;
@@ -21,8 +38,89 @@ interface Web3Link {
   platform?: string;
 }
 
+// Sortable Link Component
+function SortableLink({ link, onDelete, isLoading }: { link: Web3Link; onDelete: (id: number) => void; isLoading: boolean }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: link.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="bg-amber-50 rounded-lg p-4 border border-gray-300 hover:border-green-300 hover:shadow-md transition-all cursor-grab active:cursor-grabbing"
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-amber-200 rounded-lg flex items-center justify-center">
+            <span className="text-lg">{link.icon || '🔗'}</span>
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-gray-900">{link.title}</h3>
+              <button className="text-gray-400 hover:text-gray-600">✏️</button>
+            </div>
+            <p className="text-sm text-gray-500">{link.url}</p>
+            {link.url === 'http://emirkc_' && (
+              <div className="bg-red-100 border border-red-200 rounded p-2 mt-2">
+                <p className="text-red-800 text-xs">Please enter a valid URL</p>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 text-gray-500 text-sm">
+            <span>📊</span>
+            <span>📤</span>
+            <span>⭐</span>
+            <span>🔒</span>
+            <span>0 clicks</span>
+          </div>
+          <button className="text-gray-400 hover:text-gray-600">📤</button>
+          <button 
+            className={`w-12 h-6 rounded-full border-2 flex items-center justify-center ${
+              link.is_active 
+                ? 'bg-green-500 border-green-500' 
+                : 'bg-gray-300 border-gray-300'
+            }`}
+            type="button"
+          >
+            {link.is_active && <span className="text-white text-xs">✓</span>}
+          </button>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(link.id);
+            }}
+            disabled={isLoading}
+            className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Delete link"
+          >
+            {isLoading ? '⏳' : '🗑️'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Admin() {
-  const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  // Mock Forest kullanıyoruz, cüzdan hooks'ları gerekli değil
+  // const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  // const currentAccount = useCurrentAccount();
   
   const [links, setLinks] = useState<Web3Link[]>([]);
   const [isAddLinkModalOpen, setIsAddLinkModalOpen] = useState(false);
@@ -31,13 +129,14 @@ export function Admin() {
     url: '',
     icon: '',
     banner: '',
-    type: 'custom' as 'wallet' | 'nft' | 'defi' | 'social' | 'custom',
+    type: 'custom' as const,
     blockchain: '',
     contractAddress: '',
-    tokenId: ''
+    tokenId: '',
+    platform: ''
   });
 
-  const [profileSettings, setProfileSettings] = useState({
+  const [profile, setProfile] = useState({
     displayName: '',
     bio: '',
     profileImage: '',
@@ -45,88 +144,73 @@ export function Admin() {
     customDomain: ''
   });
 
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
+  const [mockData, setMockData] = useState<any>(null);
   const [profileId, setProfileId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
-  useEffect(() => {
-    loadProfileData();
-  }, []);
+  // Drag & Drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
-  // Profil verilerini akıllı kontraktan yükle
-  const loadProfileData = async () => {
+  // Profil verilerini mock data'dan yükle
+  const loadProfileData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError('');
       
-      const storedProfileId = localStorage.getItem('forest_profile_id');
-      console.log('🔍 Admin: Stored Profile ID:', storedProfileId);
+      // Mock Forest kullanıyoruz, cüzdan kontrolü gerekli değil
+      console.log('🔍 Admin: Loading profile from mock data');
       
+      // localStorage'dan profil ID'yi al
+      const storedProfileId = localStorage.getItem('forest_profile_id');
       if (!storedProfileId) {
+        console.error('❌ Admin: No profile ID found in localStorage');
         setError('Profil bulunamadı. Lütfen önce profil oluşturun.');
         return;
       }
 
-      setProfileId(storedProfileId);
-      
+      // Profili mock data'dan bul
       let profileData = await forest.getProfile(storedProfileId);
       console.log('🔍 Admin: Profile data received:', profileData);
       
-      if (!profileData && storedProfileId.startsWith('temp_')) {
-        console.log('🔍 Admin: Using localStorage data for temporary ID:', storedProfileId);
-        const userData = localStorage.getItem('forest_user_data');
-        if (userData) {
-          const parsedData = JSON.parse(userData);
-          profileData = {
-            id: storedProfileId,
-            owner: '',
-            username: parsedData.username || 'user',
-            display_name: parsedData.displayName || 'Anonymous',
-            bio: parsedData.bio || '',
-            image_url: parsedData.imageUrl || '',
-            subdomain: parsedData.subdomain || 'user.forest.ee',
-            link_ids: [],
-            next_link_id: 0,
-            link_count: 0,
-          };
-        } else {
-          profileData = {
-            id: storedProfileId,
-            owner: '',
-            username: 'user',
-            display_name: 'Anonymous',
-            bio: '',
-            image_url: '',
-            subdomain: 'user.forest.ee',
-            link_ids: [],
-            next_link_id: 0,
-            link_count: 0,
-          };
-        }
-      }
-      
       if (!profileData) {
-        console.error('❌ Admin: Profile not found on blockchain for ID:', storedProfileId);
-        setError('Profil blockchain\'de bulunamadı. Lütfen önce profil oluşturun.');
+        console.error('❌ Admin: Profile not found in mock data for ID:', storedProfileId);
+        setError('Profil mock data\'da bulunamadı. Lütfen önce profil oluşturun.');
         return;
       }
+
+      // Profil ID'yi set et
+      setProfileId(profileData.id);
       
-      const profileLinks = await forest.getProfileLinks(storedProfileId);
-      
-      const web3Links: Web3Link[] = profileLinks.map(link => ({
-        id: link.id,
-        profile_id: storedProfileId,
-        type: 'custom',
-        title: link.title,
-        url: link.url,
-        icon: link.icon,
-        banner: link.banner,
-        is_active: link.is_active,
-        order: link.order,
-      }));
+      // Link'leri mock data'dan çek
+      let web3Links: Web3Link[] = [];
+      try {
+        const profileLinks = await forest.getProfileLinks(profileData.id);
+        web3Links = profileLinks.map(link => ({
+          id: link.id,
+          profile_id: profileData.id,
+          type: 'custom',
+          title: link.title,
+          url: link.url,
+          icon: link.icon,
+          banner: link.banner,
+          is_active: link.is_active,
+          order: link.order,
+        }));
+        console.log('✅ Admin: Loaded links from mock data:', web3Links);
+      } catch (linkError) {
+        console.warn('⚠️ Admin: Could not fetch links from mock data:', linkError);
+        web3Links = []; // Boş array kullan
+      }
       
       setLinks(web3Links);
-      setProfileSettings({
+        setProfile({
         displayName: profileData.display_name,
         bio: profileData.bio,
         profileImage: profileData.image_url,
@@ -148,15 +232,66 @@ export function Admin() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  // Link ekleme fonksiyonu - akıllı kontraktla
+  useEffect(() => {
+    loadProfileData();
+    
+    // LinkAddedEvent listener'ını başlat
+    const setupEventListeners = async () => {
+      try {
+        // LinkAdded event'ini dinle
+        const unsubscribeLinkAdded = await forest.listenForLinkAdded((event) => {
+          console.log('🔍 Admin: LinkAdded event received:', event);
+          
+          // Eğer bu kullanıcının profili ise UI'yi güncelle
+          if (profileId && event.profile_id === profileId) {
+            console.log('✅ Admin: Link added to current profile, refreshing data');
+            loadProfileData(); // Profil verilerini yeniden yükle
+          }
+        });
+        
+        // LinkDeleted event'ini dinle
+        const unsubscribeLinkDeleted = await forest.listenForLinkDeleted((event) => {
+          console.log('🔍 Admin: LinkDeleted event received:', event);
+          
+          // Eğer bu kullanıcının profili ise UI'yi güncelle
+          if (profileId && event.profile_id === profileId) {
+            console.log('✅ Admin: Link deleted from current profile, refreshing data');
+            loadProfileData(); // Profil verilerini yeniden yükle
+          }
+        });
+        
+        // Cleanup function
+        return () => {
+          unsubscribeLinkAdded();
+          unsubscribeLinkDeleted();
+        };
+      } catch (error) {
+        console.error('❌ Admin: Error setting up event listeners:', error);
+      }
+    };
+    
+    const cleanup = setupEventListeners();
+    
+    return () => {
+      cleanup.then(cleanupFn => cleanupFn && cleanupFn());
+    };
+  }, [profileId, loadProfileData]);
+
+  // Link ekleme fonksiyonu - mock data ile
   const handleAddLink = async () => {
+    console.log('🔍 Admin: handleAddLink called');
+    console.log('🔍 Admin: profileId:', profileId);
+    console.log('🔍 Admin: newLink:', newLink);
+    
     if (!newLink.title.trim() || !newLink.url.trim()) {
+      console.log('❌ Admin: Title or URL is empty');
       setError('Lütfen başlık ve URL alanlarını doldurun.');
       return;
     }
     if (!profileId) {
+      console.log('❌ Admin: No profile ID');
       setError('Profil ID bulunamadı.');
       return;
     }
@@ -179,16 +314,19 @@ export function Admin() {
         newLink.url,
         newLink.icon || '🔗',
         newLink.banner || '',
-        signAndExecuteTransaction
+        null // Mock Forest için signAndExecuteTransaction gerekli değil
       );
 
       console.log('✅ Admin: Link added successfully:', result);
 
       if (result.linkId !== undefined) {
-        await loadProfileData();
-        setNewLink({ title: '', url: '', icon: '', banner: '', type: 'custom', blockchain: '', contractAddress: '', tokenId: '' });
+        // UI'yi manuel olarak güncelle
+        setNewLink({ title: '', url: '', icon: '', banner: '', type: 'custom', blockchain: '', contractAddress: '', tokenId: '', platform: '' });
         setIsAddLinkModalOpen(false);
-        console.log('✅ Admin: Link added and UI updated');
+        
+        // Profil verilerini yeniden yükle
+        loadProfileData();
+        console.log('✅ Admin: Link added, UI updated');
       }
     } catch (err) {
       console.error('❌ Admin: Link eklenirken hata:', err);
@@ -199,9 +337,141 @@ export function Admin() {
     }
   };
 
+  // Debug paneli fonksiyonları
+  const toggleDebugPanel = () => {
+    setShowDebugPanel(!showDebugPanel);
+    if (!showDebugPanel) {
+      setMockData(forest.getMockData());
+    }
+  };
+
+  const clearMockData = () => {
+    if (confirm('Tüm mock data silinecek. Emin misiniz?')) {
+      forest.clearMockData();
+      setMockData(null);
+      loadProfileData();
+    }
+  };
+
+  const exportMockData = () => {
+    const data = forest.getMockData();
+    const dataStr = JSON.stringify(data, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'forest-mock-data.json';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importMockData = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target?.result as string);
+            forest.importMockData(data);
+            setMockData(data);
+            loadProfileData();
+            alert('✅ Mock data imported successfully!');
+          } catch (error) {
+            alert('❌ Error importing data. Please check the file format.');
+          }
+        };
+        reader.readAsText(file);
+      }
+    };
+    input.click();
+  };
+
   const handleCloseModal = () => {
     setIsAddLinkModalOpen(false);
-    setNewLink({ title: '', url: '', icon: '', banner: '', type: 'custom', blockchain: '', contractAddress: '', tokenId: '' });
+    setNewLink({ 
+      title: '', 
+      url: '', 
+      icon: '', 
+      banner: '', 
+      type: 'custom', 
+      blockchain: '', 
+      contractAddress: '', 
+      tokenId: '', 
+      platform: '' 
+    });
+  };
+
+  // Drag & Drop handler
+  const handleDragEnd = async (event: any) => {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+      const oldIndex = links.findIndex((link) => link.id === active.id);
+      const newIndex = links.findIndex((link) => link.id === over.id);
+
+      const newLinks = arrayMove(links, oldIndex, newIndex);
+      setLinks(newLinks);
+
+      // Mock Forest'a yeni sıralamayı kaydet
+      try {
+        await forest.reorderLinkWithDappKit(
+          profileId,
+          active.id,
+          newIndex,
+          null
+        );
+        console.log('✅ Link order updated successfully');
+      } catch (error) {
+        console.error('❌ Error updating link order:', error);
+        // Hata durumunda eski sıralamayı geri yükle
+        loadProfileData();
+      }
+    }
+  };
+
+  // Link silme fonksiyonu - mock data ile
+  const handleDeleteLink = async (linkId: number) => {
+    if (!profileId) {
+      setError('Profil ID bulunamadı.');
+      return;
+    }
+
+    // Silme onayı
+    const linkToDelete = links.find(link => link.id === linkId);
+    const linkTitle = linkToDelete?.title || 'this link';
+    
+    if (!confirm(`Are you sure you want to delete "${linkTitle}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError('');
+
+      console.log('🔍 Admin: Deleting link:', { profileId, linkId });
+
+      const result = await forest.deleteLinkWithDappKit(
+        profileId,
+        linkId,
+        null // Mock Forest için signAndExecuteTransaction gerekli değil
+      );
+
+      console.log('✅ Admin: Link deleted successfully:', result);
+
+      // UI'yi manuel olarak güncelle
+      loadProfileData();
+      console.log('✅ Admin: Link deleted, UI updated');
+    } catch (err) {
+      console.error('❌ Admin: Link silinirken hata:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Link silinirken bir hata oluştu.';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -226,9 +496,9 @@ export function Admin() {
           <div className="p-4 border-b border-amber-600 relative z-10">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 bg-amber-200 rounded-full flex items-center justify-center overflow-hidden border-2 border-amber-400">
-                {profileSettings.profileImage ? (
+                {profile.profileImage ? (
                   <img 
-                    src={profileSettings.profileImage} 
+                    src={profile.profileImage} 
                     alt="Profile" 
                     className="w-full h-full object-cover"
                   />
@@ -237,7 +507,7 @@ export function Admin() {
                 )}
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-white text-sm drop-shadow-lg">{profileSettings.displayName}</h3>
+                <h3 className="font-bold text-white text-sm drop-shadow-lg">{profile.displayName}</h3>
                 <p className="text-xs text-amber-200">▼</p>
               </div>
               <button className="text-amber-200 hover:text-white transition-colors">🔔</button>
@@ -295,6 +565,13 @@ export function Admin() {
                   <span>✨</span>
                   <span className="text-sm font-medium">Enhance</span>
                 </button>
+                <button 
+                  onClick={toggleDebugPanel}
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                >
+                  <span>🐛</span>
+                  <span className="text-sm font-medium">Debug</span>
+                </button>
                 <button className="text-gray-600 hover:text-gray-900">⚙️</button>
               </div>
             </div>
@@ -302,6 +579,63 @@ export function Admin() {
 
           {/* Main Content */}
           <div className="flex-1 p-6">
+            {/* Debug Panel */}
+            {showDebugPanel && (
+              <div className="bg-gray-900 text-white rounded-lg p-6 mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold">🐛 Mock Data Debug Panel</h3>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={exportMockData}
+                      className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm"
+                    >
+                      📤 Export
+                    </button>
+                    <button
+                      onClick={importMockData}
+                      className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-sm"
+                    >
+                      📥 Import
+                    </button>
+                    <button
+                      onClick={clearMockData}
+                      className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm"
+                    >
+                      🗑️ Clear All
+                    </button>
+                    <button
+                      onClick={toggleDebugPanel}
+                      className="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-sm"
+                    >
+                      ✕ Close
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div className="bg-gray-800 p-3 rounded">
+                    <h4 className="font-semibold text-green-400">Profiles</h4>
+                    <p className="text-sm">{mockData?.profiles ? Object.keys(mockData.profiles).length : 0}</p>
+                  </div>
+                  <div className="bg-gray-800 p-3 rounded">
+                    <h4 className="font-semibold text-blue-400">Links</h4>
+                    <p className="text-sm">{mockData?.links ? Object.keys(mockData.links).length : 0}</p>
+                  </div>
+                  <div className="bg-gray-800 p-3 rounded">
+                    <h4 className="font-semibold text-yellow-400">Next ID</h4>
+                    <p className="text-sm">{mockData?.nextId || 0}</p>
+                  </div>
+                </div>
+
+                <div className="bg-gray-800 rounded p-4">
+                  <h4 className="font-semibold mb-2">Raw Data:</h4>
+                  <pre className="text-xs overflow-auto max-h-64 bg-black p-2 rounded">
+                    {JSON.stringify(mockData, null, 2)}
+                  </pre>
+                </div>
+              </div>
+            )}
+
             {/* Error Message */}
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
@@ -326,9 +660,9 @@ export function Admin() {
             <div className="bg-amber-50 rounded-lg p-6 mb-6 border border-gray-300">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 bg-amber-200 rounded-full flex items-center justify-center overflow-hidden">
-                  {profileSettings.profileImage ? (
+                  {profile.profileImage ? (
                     <img 
-                      src={profileSettings.profileImage} 
+                      src={profile.profileImage} 
                       alt="Profile" 
                       className="w-full h-full object-cover"
                     />
@@ -338,10 +672,10 @@ export function Admin() {
                 </div>
                 <div className="flex-1">
                   <h2 className="text-xl font-bold text-gray-900">
-                    {profileSettings.displayName || 'Yükleniyor...'}
+                    {profile.displayName || 'Yükleniyor...'}
                   </h2>
                   <p className="text-gray-600">
-                    {profileSettings.bio || 'Add bio'}
+                    {profile.bio || 'Add bio'}
                   </p>
                   <div className="flex items-center gap-2 mt-2">
                     <span className="text-lg">📷</span>
@@ -352,7 +686,10 @@ export function Admin() {
               
               <div className="flex gap-4">
                 <button 
-                  onClick={() => setIsAddLinkModalOpen(true)}
+                  onClick={() => {
+                    console.log('🔍 Admin: Add button clicked, opening modal');
+                    setIsAddLinkModalOpen(true);
+                  }}
                   disabled={isLoading}
                   className="group relative bg-gradient-to-r from-green-600 via-green-500 to-emerald-600 hover:from-green-500 hover:via-green-400 hover:to-emerald-500 text-white px-10 py-5 rounded-2xl font-bold text-xl shadow-2xl transition-all duration-500 hover:shadow-green-500/50 hover:shadow-2xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
                 >
@@ -381,60 +718,32 @@ export function Admin() {
                 <div className="text-center py-12 text-gray-500">
                   <p className="mb-4">No links yet</p>
                   <Button
-                    onClick={() => setIsAddLinkModalOpen(true)}
+                    onClick={() => {
+                      console.log('🔍 Admin: Add Your First Link button clicked, opening modal');
+                      setIsAddLinkModalOpen(true);
+                    }}
                     className="bg-green-600 text-white hover:bg-green-700"
                   >
                     Add Your First Link
                   </Button>
                 </div>
               ) : (
-                links.map((link) => (
-                  <div
-                    key={link.id}
-                    className="bg-amber-50 rounded-lg p-4 border border-gray-300 hover:border-green-300 hover:shadow-md transition-all"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-amber-200 rounded-lg flex items-center justify-center">
-                          <span className="text-lg">{link.icon || '🔗'}</span>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-gray-900">{link.title}</h3>
-                            <button className="text-gray-400 hover:text-gray-600">✏️</button>
-                          </div>
-                          <p className="text-sm text-gray-500">{link.url}</p>
-                          {link.url === 'http://emirkc_' && (
-                            <div className="bg-red-100 border border-red-200 rounded p-2 mt-2">
-                              <p className="text-red-800 text-xs">Please enter a valid URL</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1 text-gray-500 text-sm">
-                          <span>📊</span>
-                          <span>📤</span>
-                          <span>⭐</span>
-                          <span>🔒</span>
-                          <span>0 clicks</span>
-                        </div>
-                        <button className="text-gray-400 hover:text-gray-600">📤</button>
-                        <button 
-                          className={`w-12 h-6 rounded-full border-2 flex items-center justify-center ${
-                            link.is_active 
-                              ? 'bg-green-500 border-green-500' 
-                              : 'bg-gray-300 border-gray-300'
-                          }`}
-                          type="button"
-                        >
-                          {link.is_active && <span className="text-white text-xs">✓</span>}
-                        </button>
-                        <button className="text-gray-400 hover:text-gray-600">🗑️</button>
-                      </div>
-                    </div>
-                  </div>
-                ))
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext items={links.map(link => link.id)} strategy={verticalListSortingStrategy}>
+                    {links.map((link) => (
+                      <SortableLink
+                        key={link.id}
+                        link={link}
+                        onDelete={handleDeleteLink}
+                        isLoading={isLoading}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
               )}
 
               {/* Forest Footer Card */}
@@ -466,11 +775,11 @@ export function Admin() {
             <div className="bg-white rounded-xl border-2 border-gray-300 p-4 shadow-lg">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <span className="text-sm text-gray-700 font-medium">forest.ee/{profileSettings.displayName}</span>
+                  <span className="text-sm text-gray-700 font-medium">forest.ee/{profile.displayName}</span>
                 </div>
                 <button 
                   onClick={() => {
-                    navigator.clipboard.writeText(`forest.ee/${profileSettings.displayName}`);
+                    navigator.clipboard.writeText(`forest.ee/${profile.displayName}`);
                     // Toast notification could be added here
                   }}
                   className="ml-3 p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
@@ -513,9 +822,9 @@ export function Admin() {
                     {/* Premium Profile Section */}
                     <div className="text-center mb-8">
                       <div className="w-20 h-20 bg-white bg-opacity-10 rounded-full mx-auto mb-4 flex items-center justify-center shadow-2xl overflow-hidden backdrop-blur-sm border border-white border-opacity-20">
-                        {profileSettings.profileImage ? (
+                        {profile.profileImage ? (
                           <img 
-                            src={profileSettings.profileImage} 
+                            src={profile.profileImage} 
                             alt="Profile" 
                             className="w-full h-full object-cover"
                           />
@@ -523,7 +832,7 @@ export function Admin() {
                           <span className="text-white text-3xl">👤</span>
                         )}
                       </div>
-                      <h2 className="text-xl font-bold text-white mb-2">@{profileSettings.displayName}</h2>
+                      <h2 className="text-xl font-bold text-white mb-2">@{profile.displayName}</h2>
                       <div className="flex items-center justify-center gap-3">
                         <span className="text-white text-lg">📷</span>
                       </div>
@@ -561,7 +870,7 @@ export function Admin() {
                     {/* Premium Call to Action Button */}
                     <div className="mt-auto">
                       <button className="w-full bg-white hover:bg-gray-50 text-gray-900 font-bold py-4 px-6 rounded-3xl transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] text-lg">
-                        Forest'te {profileSettings.displayName} ile katılın
+                        Forest'te {profile.displayName} ile katılın
                       </button>
                     </div>
 

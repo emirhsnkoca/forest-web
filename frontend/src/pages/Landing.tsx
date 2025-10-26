@@ -5,11 +5,15 @@ import { Background } from '../components/common/Background';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import { useNavigate } from 'react-router-dom';
-import { FaWallet, FaImage, FaHeart, FaLink } from 'react-icons/fa';
+import { FaWallet, FaImage, FaHeart, FaLink, FaSearch } from 'react-icons/fa';
 import { useCurrentAccount, useCurrentWallet } from '@mysten/dapp-kit';
+import { forest } from '../forest';
 
 export function Landing() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const navigate = useNavigate();
   // AuthContext kaldırıldı - Mysten Labs hooks kullanılıyor
   const suiAccount = useCurrentAccount();
@@ -48,6 +52,39 @@ export function Landing() {
   const handleWalletConnected = () => {
     console.log('Sui wallet bağlandı, onboarding\'e gidiyoruz!');
     navigate('/onboarding');
+  };
+
+  // Profil arama fonksiyonu
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    try {
+      const mockData = forest.getMockData();
+      const profiles = Object.values(mockData.profiles || {});
+      
+      // Arama kriterleri: username, display_name, bio, subdomain
+      const results = profiles.filter((profile: any) => 
+        profile.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        profile.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        profile.bio.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        profile.subdomain.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Arama hatası:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Enter tuşu ile arama
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
   const handleGetStarted = () => {
@@ -90,6 +127,62 @@ export function Landing() {
                     Wallet: {(suiWallet as any)?.name || 'Unknown'}
                   </p>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Search Section */}
+          <div className="max-w-md mx-auto mb-8 animate-fade-in animate-delay-100">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search profiles..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="w-full px-4 py-3 pl-12 pr-4 border-2 border-gray-300 rounded-full focus:border-primary focus:outline-none"
+              />
+              <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <button
+                onClick={handleSearch}
+                disabled={isSearching}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-primary text-white px-4 py-1 rounded-full hover:bg-primary-dark disabled:opacity-50"
+              >
+                {isSearching ? '...' : 'Search'}
+              </button>
+            </div>
+          </div>
+
+          {/* Search Results */}
+          {searchResults.length > 0 && (
+            <div className="max-w-2xl mx-auto mb-8 animate-fade-in">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                Found {searchResults.length} profile(s):
+              </h3>
+              <div className="space-y-2">
+                {searchResults.map((profile: any) => (
+                  <div
+                    key={profile.id}
+                    onClick={() => navigate(`/profile/${profile.owner}`)}
+                    className="bg-white rounded-lg p-4 border border-gray-200 hover:border-primary hover:shadow-md transition-all cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold">
+                        {profile.display_name[0].toUpperCase()}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900">{profile.display_name}</h4>
+                        <p className="text-sm text-gray-600">@{profile.username}</p>
+                        {profile.bio && (
+                          <p className="text-sm text-gray-500 mt-1">{profile.bio}</p>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {profile.link_count} links
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
