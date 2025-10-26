@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
@@ -22,10 +23,13 @@ interface Web3Link {
 }
 
 export function Admin() {
+  const navigate = useNavigate();
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   
+  const [activeTab, setActiveTab] = useState('links');
   const [links, setLinks] = useState<Web3Link[]>([]);
   const [isAddLinkModalOpen, setIsAddLinkModalOpen] = useState(false);
+  const [editingLink, setEditingLink] = useState<Web3Link | null>(null);
   const [newLink, setNewLink] = useState({
     title: '',
     url: '',
@@ -201,31 +205,31 @@ export function Admin() {
 
   const handleCloseModal = () => {
     setIsAddLinkModalOpen(false);
+    setEditingLink(null);
     setNewLink({ title: '', url: '', icon: '', banner: '', type: 'custom', blockchain: '', contractAddress: '', tokenId: '' });
   };
 
   return (
     <div className="min-h-screen bg-amber-50">
+      {/* Top Banner */}
+      <div className="bg-gray-800 text-white py-3 px-6 flex justify-between items-center">
+        <span className="text-sm">Try Pro for free — our most popular plan for content creators and businesses.</span>
+        <button 
+          type="button"
+          onClick={() => window.location.href = '/upgrade'}
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        >
+          + Upgrade
+        </button>
+      </div>
 
       <div className="flex">
-        {/* Left Sidebar - Minecraft Style */}
-        <div className="w-64 bg-gradient-to-b from-amber-800 via-amber-700 to-amber-900 border-r border-amber-600 flex flex-col min-h-screen relative overflow-hidden">
-          {/* Minecraft Texture Overlay */}
-          <div className="absolute inset-0 opacity-20">
-            <div className="w-full h-full" style={{
-              backgroundImage: `
-                radial-gradient(circle at 20% 20%, rgba(139, 69, 19, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(160, 82, 45, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 40% 60%, rgba(101, 67, 33, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 60% 40%, rgba(120, 75, 37, 0.3) 0%, transparent 50%)
-              `,
-              backgroundSize: '20px 20px, 15px 15px, 25px 25px, 18px 18px'
-            }}></div>
-          </div>
+        {/* Left Sidebar */}
+        <div className="w-64 bg-amber-100 border-r border-amber-200 flex flex-col min-h-screen">
           {/* User Profile Section */}
-          <div className="p-4 border-b border-amber-600 relative z-10">
+          <div className="p-4 border-b border-amber-200">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 bg-amber-200 rounded-full flex items-center justify-center overflow-hidden border-2 border-amber-400">
+              <div className="w-8 h-8 bg-amber-200 rounded-full flex items-center justify-center overflow-hidden">
                 {profileSettings.profileImage ? (
                   <img 
                     src={profileSettings.profileImage} 
@@ -233,51 +237,112 @@ export function Admin() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-amber-800">👤</span>
+                  <span className="text-amber-700">👤</span>
                 )}
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-white text-sm drop-shadow-lg">{profileSettings.displayName}</h3>
-                <p className="text-xs text-amber-200">▼</p>
+                <h3 className="font-bold text-gray-900 text-sm">{profileSettings.displayName}</h3>
+                <p className="text-xs text-gray-500">▼</p>
               </div>
-              <button className="text-amber-200 hover:text-white transition-colors">🔔</button>
+              <button className="text-gray-600 hover:text-gray-900">🔔</button>
             </div>
           </div>
 
           {/* Navigation Menu */}
-          <div className="flex-1 p-4 relative z-10">
+          <div className="flex-1 p-4">
             <div className="space-y-1">
-              <h3 className="text-xs font-semibold text-amber-200 uppercase tracking-wider mb-3 drop-shadow-lg">My Forest</h3>
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">My Forest</h3>
               <button 
-                className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium bg-green-600 text-white border-2 border-green-500 shadow-lg hover:bg-green-500 transition-colors"
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium ${
+                  activeTab === 'links' ? 'bg-green-100 text-green-800' : 'text-gray-600 hover:bg-amber-50'
+                }`}
+                onClick={() => setActiveTab('links')}
                 type="button"
               >
                 Links
+              </button>
+              <button 
+                className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-amber-50"
+                type="button"
+              >
+                Shop
+              </button>
+              <button 
+                className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-amber-50"
+                type="button"
+              >
+                Design
+              </button>
+              <button 
+                className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-amber-50"
+                type="button"
+              >
+                Earn
+              </button>
+              <button 
+                className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-amber-50"
+                type="button"
+              >
+                Audience
+              </button>
+              <button 
+                className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-amber-50"
+                type="button"
+              >
+                Insights
+              </button>
+            </div>
+
+            <div className="mt-8">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Tools</h3>
+              <button 
+                className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-amber-50"
+                type="button"
+              >
+                Social planner
+              </button>
+              <button 
+                className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-amber-50"
+                type="button"
+              >
+                Instagram auto-reply
+              </button>
+              <button 
+                className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-amber-50"
+                type="button"
+              >
+                Link shortener
+              </button>
+              <button 
+                className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-amber-50"
+                type="button"
+              >
+                Post ideas
               </button>
             </div>
           </div>
 
           {/* Setup Checklist */}
-          <div className="p-4 border-t border-amber-600 relative z-10">
-            <div className="bg-amber-800 border-2 border-amber-600 rounded-lg p-4 shadow-lg">
+          <div className="p-4 border-t border-amber-200">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-green-400">
+                <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
                   33%
                 </div>
-                <span className="text-sm font-medium text-white drop-shadow-lg">Your setup checklist</span>
+                <span className="text-sm font-medium text-gray-900">Your setup checklist</span>
               </div>
-              <p className="text-xs text-amber-200 mb-3">2 of 6 complete</p>
-              <button className="w-full bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-green-500 transition-colors border-2 border-green-500 shadow-lg">
+              <p className="text-xs text-gray-600 mb-3">2 of 6 complete</p>
+              <button className="w-full bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">
                 Finish setup
               </button>
             </div>
           </div>
 
           {/* Help Icons */}
-          <div className="p-4 border-t border-amber-600 relative z-10">
+          <div className="p-4 border-t border-amber-200">
             <div className="flex items-center gap-3">
-              <button className="text-amber-200 hover:text-white transition-colors">❓</button>
-              <button className="text-amber-200 hover:text-white transition-colors">⚙️</button>
+              <button className="text-gray-500 hover:text-gray-700">❓</button>
+              <button className="text-gray-500 hover:text-gray-700">⚙️</button>
             </div>
           </div>
         </div>
@@ -285,7 +350,7 @@ export function Admin() {
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col">
           {/* Top Header */}
-          <div className="bg-amber-50 border-b border-gray-300 px-6 py-4">
+          <div className="bg-amber-50 border-b border-amber-200 px-6 py-4">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Links</h1>
@@ -323,7 +388,7 @@ export function Admin() {
             )}
 
             {/* Profile Section */}
-            <div className="bg-amber-50 rounded-lg p-6 mb-6 border border-gray-300">
+            <div className="bg-amber-50 rounded-lg p-6 mb-6 border border-amber-200">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 bg-amber-200 rounded-full flex items-center justify-center overflow-hidden">
                   {profileSettings.profileImage ? (
@@ -351,28 +416,31 @@ export function Admin() {
               </div>
               
               <div className="flex gap-4">
-                <button 
+                <Button 
                   onClick={() => setIsAddLinkModalOpen(true)}
                   disabled={isLoading}
-                  className="group relative bg-gradient-to-r from-green-600 via-green-500 to-emerald-600 hover:from-green-500 hover:via-green-400 hover:to-emerald-500 text-white px-10 py-5 rounded-2xl font-bold text-xl shadow-2xl transition-all duration-500 hover:shadow-green-500/50 hover:shadow-2xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg font-medium shadow-sm transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed text-lg"
                 >
-                  {/* Luxury Glow Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 via-transparent to-yellow-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  
-                  {/* Luxury Border Glow */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-yellow-400/30 via-green-400/30 to-emerald-400/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm"></div>
-                  
-                  {/* Button Content */}
-                  <div className="relative z-10 flex items-center justify-center gap-3">
-                    <span className="text-2xl group-hover:rotate-90 transition-transform duration-300">+</span>
-                    <span>{isLoading ? 'Yükleniyor...' : 'Add'}</span>
-                  </div>
-                  
-                  {/* Luxury Shine Effect */}
-                  <div className="absolute inset-0 -top-2 -left-2 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-pulse transition-opacity duration-500"></div>
-                </button>
+                  <span className="mr-2">+</span>
+                  {isLoading ? 'Yükleniyor...' : 'Add'}
+                </Button>
               </div>
 
+              <div className="flex gap-4 mt-4">
+                <Button 
+                  variant="outline"
+                  className="px-4 py-2 rounded-lg font-medium border-amber-300 text-gray-700 hover:bg-amber-100"
+                >
+                  <span className="mr-2">📁</span>
+                  Add collection
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="px-4 py-2 rounded-lg font-medium border-amber-300 text-gray-700 hover:bg-amber-100 ml-auto"
+                >
+                  View archive &gt;
+                </Button>
+              </div>
             </div>
 
             {/* Links Section */}
@@ -391,7 +459,7 @@ export function Admin() {
                 links.map((link) => (
                   <div
                     key={link.id}
-                    className="bg-amber-50 rounded-lg p-4 border border-gray-300 hover:border-green-300 hover:shadow-md transition-all"
+                    className="bg-amber-50 rounded-lg p-4 border border-amber-200 hover:border-green-300 hover:shadow-md transition-all"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -438,7 +506,7 @@ export function Admin() {
               )}
 
               {/* Forest Footer Card */}
-              <div className="bg-amber-50 rounded-lg p-4 border border-gray-300">
+              <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-semibold text-gray-900">Forest footer</h3>
@@ -460,59 +528,43 @@ export function Admin() {
         </div>
 
         {/* Right Mobile Preview Panel */}
-        <div className="w-80 bg-amber-50 border-l border-gray-300 p-6 flex flex-col items-center justify-center">
-          {/* Share/Copy Area */}
-          <div className="w-full max-w-sm mb-6">
-            <div className="bg-white rounded-xl border-2 border-gray-300 p-4 shadow-lg">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <span className="text-sm text-gray-700 font-medium">forest.ee/{profileSettings.displayName}</span>
-                </div>
-                <button 
-                  onClick={() => {
-                    navigator.clipboard.writeText(`forest.ee/${profileSettings.displayName}`);
-                    // Toast notification could be added here
-                  }}
-                  className="ml-3 p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                  title="Copy link"
-                >
-                  📤
-                </button>
-              </div>
+        <div className="w-80 bg-amber-50 border-l border-amber-200 p-4">
+          <div className="flex flex-col items-center">
+            {/* Profile URL */}
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-sm text-gray-600">forest.ee/{profileSettings.displayName}</span>
+              <button className="text-gray-600 hover:text-gray-900">📤</button>
             </div>
-          </div>
 
-          <div className="flex flex-col items-center max-w-sm">
-
-            {/* Ultra Stylish Phone Frame */}
+            {/* Stylish Phone Frame */}
             <div className="relative">
-              {/* Phone Frame with Premium Design */}
-              <div className="w-72 h-[600px] bg-gradient-to-b from-gray-900 to-gray-800 rounded-[3rem] p-3 shadow-2xl">
-                {/* Phone Screen with Premium Look */}
-                <div className="w-full h-full bg-gradient-to-b from-gray-900 to-gray-800 rounded-[2.5rem] overflow-hidden relative border border-gray-700">
-                  {/* Premium Status Bar */}
-                  <div className="absolute top-0 left-0 right-0 h-8 bg-black bg-opacity-40 flex items-center justify-between px-6 text-white text-sm font-medium">
+              {/* Phone Frame */}
+              <div className="w-64 h-[500px] bg-gray-800 rounded-[2.5rem] p-2 shadow-2xl">
+                {/* Phone Screen */}
+                <div className="w-full h-full bg-gradient-to-b from-green-400 to-green-600 rounded-[2rem] overflow-hidden relative">
+                  {/* Status Bar */}
+                  <div className="absolute top-0 left-0 right-0 h-6 bg-black bg-opacity-20 flex items-center justify-between px-4 text-white text-xs">
                     <span>9:42</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-3 bg-white rounded-sm opacity-80"></div>
-                      <div className="w-8 h-4 border border-white rounded-sm opacity-60">
-                        <div className="w-6 h-3 bg-white rounded-sm m-0.5"></div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-4 h-2 bg-white rounded-sm"></div>
+                      <div className="w-6 h-3 border border-white rounded-sm">
+                        <div className="w-4 h-2 bg-white rounded-sm m-0.5"></div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Premium Content */}
-                  <div className="pt-10 p-8 h-full flex flex-col">
-                    {/* Top Icon with Glow */}
-                    <div className="flex justify-start mb-8">
-                      <div className="w-10 h-10 bg-white bg-opacity-10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white border-opacity-20">
-                        <span className="text-white text-lg">*</span>
+                  {/* Content */}
+                  <div className="pt-8 p-6 h-full flex flex-col">
+                    {/* Top Icon */}
+                    <div className="flex justify-start mb-6">
+                      <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm">*</span>
                       </div>
                     </div>
 
-                    {/* Premium Profile Section */}
-                    <div className="text-center mb-8">
-                      <div className="w-20 h-20 bg-white bg-opacity-10 rounded-full mx-auto mb-4 flex items-center justify-center shadow-2xl overflow-hidden backdrop-blur-sm border border-white border-opacity-20">
+                    {/* Profile Section */}
+                    <div className="text-center mb-6">
+                      <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full mx-auto mb-3 flex items-center justify-center shadow-lg overflow-hidden">
                         {profileSettings.profileImage ? (
                           <img 
                             src={profileSettings.profileImage} 
@@ -520,36 +572,36 @@ export function Admin() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <span className="text-white text-3xl">👤</span>
+                          <span className="text-white text-2xl">👤</span>
                         )}
                       </div>
-                      <h2 className="text-xl font-bold text-white mb-2">@{profileSettings.displayName}</h2>
-                      <div className="flex items-center justify-center gap-3">
-                        <span className="text-white text-lg">📷</span>
+                      <h2 className="text-lg font-bold text-white mb-1">@{profileSettings.displayName}</h2>
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-white">📷</span>
                       </div>
                     </div>
 
-                    {/* Premium Links Section */}
-                    <div className="flex-1 space-y-3 mb-6">
+                    {/* Links Section */}
+                    <div className="flex-1 space-y-2 mb-4">
                       {links.filter(link => link.is_active).map((link) => (
                         <button 
                           key={link.id}
                           onClick={() => window.open(link.url, '_blank')}
-                          className="w-full bg-white bg-opacity-95 hover:bg-opacity-100 border border-white border-opacity-30 rounded-3xl p-4 text-left transition-all duration-500 hover:shadow-2xl hover:scale-[1.03] group backdrop-blur-sm"
+                          className="w-full bg-white bg-opacity-90 hover:bg-opacity-100 border border-white border-opacity-20 rounded-2xl p-3 text-left transition-all duration-300 hover:shadow-lg hover:scale-[1.02] group"
                           type="button"
                         >
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
-                              <span className="text-white text-lg">{link.icon || '🔗'}</span>
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                              <span className="text-green-600 text-sm">{link.icon || '🔗'}</span>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-bold text-gray-900 text-base group-hover:text-green-700 transition-colors truncate">
+                              <h3 className="font-semibold text-gray-900 text-sm group-hover:text-green-700 transition-colors truncate">
                                 {link.title}
                               </h3>
-                              <p className="text-sm text-gray-600 truncate">{link.url}</p>
+                              <p className="text-xs text-gray-500 truncate">{link.url}</p>
                             </div>
                             <div className="text-gray-400 group-hover:text-green-500 transition-colors flex-shrink-0">
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                               </svg>
                             </div>
@@ -558,29 +610,23 @@ export function Admin() {
                       ))}
                     </div>
 
-                    {/* Premium Call to Action Button */}
+                    {/* Call to Action Button */}
                     <div className="mt-auto">
-                      <button className="w-full bg-white hover:bg-gray-50 text-gray-900 font-bold py-4 px-6 rounded-3xl transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] text-lg">
+                      <button className="w-full bg-white hover:bg-gray-50 text-gray-900 font-semibold py-3 px-4 rounded-2xl transition-all duration-300 hover:shadow-lg hover:scale-[1.02]">
                         Forest'te {profileSettings.displayName} ile katılın
                       </button>
-                    </div>
-
-                    {/* Forest Branding */}
-                    <div className="mt-3 text-center">
-                      <p className="text-xs text-white/60 font-medium">Powered by Forest</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Premium Phone Shadow with Glow */}
-              <div className="absolute inset-0 bg-gradient-to-b from-black to-transparent rounded-[3rem] -z-10 transform translate-y-4 opacity-30"></div>
-              <div className="absolute inset-0 bg-yellow-400 rounded-[3rem] -z-20 transform translate-y-6 opacity-20 blur-xl"></div>
+              {/* Phone Shadow */}
+              <div className="absolute inset-0 bg-black bg-opacity-20 rounded-[2.5rem] -z-10 transform translate-y-2"></div>
             </div>
 
-            {/* Premium Footer Links */}
+            {/* Footer Links */}
             <div className="mt-4 text-center">
-              <p className="text-xs text-gray-400">Report • Privacy</p>
+              <p className="text-xs text-gray-500">Report • Privacy</p>
             </div>
           </div>
         </div>

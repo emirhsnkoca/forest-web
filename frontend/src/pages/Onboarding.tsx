@@ -1,4 +1,3 @@
-import { useState, useRef } from 'react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentAccount, useWallets, useSignAndExecuteTransaction } from '@mysten/dapp-kit';

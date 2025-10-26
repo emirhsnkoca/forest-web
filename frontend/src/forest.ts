@@ -247,6 +247,14 @@ export class Forest {
     banner: string,
     signAndExecuteTransaction: any
   ): Promise<{ digest: string; linkId: number }> {
+    console.log('🔍 Forest: Creating add_link transaction:', {
+      profileId,
+      title,
+      url,
+      icon,
+      banner
+    });
+
     const txb = new Transaction();
     
     txb.moveCall({
@@ -269,13 +277,17 @@ export class Forest {
       },
     });
 
-    console.log('Link transaction result:', result);
+    console.log('🔍 Forest: Link transaction result:', result);
 
     // Event'ten link_id'yi al
     const linkAddedEvent = result?.events?.find(
       (event: any) => event.type === `${this.packageId}::${this.moduleName}::LinkAdded`
     );
+    
+    console.log('🔍 Forest: LinkAdded event found:', linkAddedEvent);
+    
     const linkId = linkAddedEvent?.parsedJson?.link_id || 0;
+    console.log('✅ Forest: Link ID extracted:', linkId);
 
     return {
       digest: result?.digest || '',
