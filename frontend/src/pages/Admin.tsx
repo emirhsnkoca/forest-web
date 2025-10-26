@@ -102,6 +102,8 @@ export function Admin() {
       
       // Local storage'dan profile ID'yi al
       const storedProfileId = localStorage.getItem('forest_profile_id');
+      console.log('🔍 Admin: Stored Profile ID:', storedProfileId);
+      
       if (!storedProfileId) {
         setError('Profil bulunamadı. Lütfen önce profil oluşturun.');
         return;
@@ -109,10 +111,48 @@ export function Admin() {
 
       setProfileId(storedProfileId);
       
-      // Profil verilerini kontraktan çek - sadece onchain veri
-      const profileData = await forest.getProfile(storedProfileId);
+      // Profil verilerini kontraktan çek
+      console.log('🔍 Admin: Fetching profile from blockchain...', storedProfileId);
+      let profileData = await forest.getProfile(storedProfileId);
+      console.log('🔍 Admin: Profile data received:', profileData);
+      
+      // Eğer profil bulunamazsa ve geçici ID ise, localStorage'dan veri kullan
+      if (!profileData && storedProfileId.startsWith('temp_')) {
+        console.log('🔍 Admin: Using localStorage data for temporary ID:', storedProfileId);
+        const userData = localStorage.getItem('forest_user_data');
+        if (userData) {
+          const parsedData = JSON.parse(userData);
+          profileData = {
+            id: storedProfileId,
+            owner: '',
+            username: parsedData.username || 'user',
+            display_name: parsedData.displayName || 'Anonymous',
+            bio: parsedData.bio || '',
+            image_url: parsedData.imageUrl || '',
+            subdomain: parsedData.subdomain || 'user.forest.ee',
+            link_ids: [],
+            next_link_id: 0,
+            link_count: 0,
+          };
+        } else {
+          // Fallback mock data
+          profileData = {
+            id: storedProfileId,
+            owner: '',
+            username: 'user',
+            display_name: 'Anonymous',
+            bio: '',
+            image_url: '',
+            subdomain: 'user.forest.ee',
+            link_ids: [],
+            next_link_id: 0,
+            link_count: 0,
+          };
+        }
+      }
       
       if (!profileData) {
+        console.error('❌ Admin: Profile not found on blockchain for ID:', storedProfileId);
         setError('Profil blockchain\'de bulunamadı. Lütfen önce profil oluşturun.');
         return;
       }
@@ -140,6 +180,14 @@ export function Admin() {
         profileImage: profileData.image_url,
         ensName: '',
         customDomain: profileData.subdomain || `${profileData.username}.forest.ee`
+      });
+      
+      console.log('✅ Admin: Profile data loaded successfully:', {
+        displayName: profileData.display_name,
+        bio: profileData.bio,
+        imageUrl: profileData.image_url,
+        subdomain: profileData.subdomain,
+        linkCount: web3Links.length
       });
       
     } catch (err) {
@@ -563,8 +611,16 @@ export function Admin() {
             {/* Profile Header */}
             <div className="bg-white rounded-lg p-6 mb-6">
               <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
-                  <span className="text-gray-600 text-2xl">👤</span>
+                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                  {profileSettings.profileImage ? (
+                    <img 
+                      src={profileSettings.profileImage} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-gray-600 text-2xl">👤</span>
+                  )}
                 </div>
                 <div className="flex-1">
                   <h2 className="text-xl font-bold text-gray-900">
@@ -573,6 +629,11 @@ export function Admin() {
                   <p className="text-gray-600">
                     {profileSettings.bio || 'Profil bilgileri yükleniyor...'}
                   </p>
+                  {profileSettings.customDomain && (
+                    <p className="text-sm text-green-600 font-medium">
+                      🌲 {profileSettings.customDomain}
+                    </p>
+                  )}
                 </div>
                 {/* Edit Profile button removed - not used */}
               </div>
@@ -670,11 +731,24 @@ export function Admin() {
               
               {/* Profile Section */}
               <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-gray-300 rounded-full mx-auto mb-3 flex items-center justify-center shadow-lg">
-                  <span className="text-gray-600 text-2xl">👤</span>
+                <div className="w-16 h-16 bg-gray-300 rounded-full mx-auto mb-3 flex items-center justify-center shadow-lg overflow-hidden">
+                  {profileSettings.profileImage ? (
+                    <img 
+                      src={profileSettings.profileImage} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-gray-600 text-2xl">👤</span>
+                  )}
                 </div>
                 <h2 className="text-lg font-bold text-gray-900 mb-1">@{profileSettings.displayName}</h2>
                 <p className="text-sm text-gray-600">{profileSettings.bio}</p>
+                {profileSettings.customDomain && (
+                  <p className="text-xs text-green-600 font-medium mt-1">
+                    🌲 {profileSettings.customDomain}
+                  </p>
+                )}
               </div>
               
               {/* Links Section */}

@@ -117,21 +117,27 @@ export class Forest {
       });
     });
 
+    console.log('🔍 Forest: Transaction result:', result);
+    
     // Basit çözüm: result'ta hex string ara
     const resultStr = JSON.stringify(result);
+    console.log('🔍 Forest: Result string:', resultStr);
+    
     const hexMatches = resultStr.match(/[0-9a-fA-F]{64}/g);
+    console.log('🔍 Forest: Hex matches found:', hexMatches);
     
     let profileId = '';
     if (hexMatches && hexMatches.length > 0) {
       // İlk hex string'i al (genelde created object olur)
       profileId = hexMatches[0];
+      console.log('✅ Forest: Using hex profile ID:', profileId);
     }
 
     if (!profileId) {
-      console.log('Result string:', resultStr);
+      console.log('❌ Forest: No hex ID found, using temporary ID');
       // Geçici çözüm: fake profile ID
       profileId = 'temp_' + Date.now();
-      console.log('Using temporary profile ID:', profileId);
+      console.log('⚠️ Forest: Using temporary profile ID:', profileId);
     }
 
     return {
@@ -412,6 +418,9 @@ export class Forest {
   // Get profile data - Move UserProfile struct'ına uygun
   async getProfile(profileId: string): Promise<Profile | null> {
     try {
+      console.log('🔍 Forest: Fetching profile with ID:', profileId);
+      console.log('🔍 Forest: Using package ID:', this.packageId);
+      
       const object = await this.client.getObject({
         id: profileId,
         options: {
@@ -419,9 +428,13 @@ export class Forest {
         },
       });
 
+      console.log('🔍 Forest: Object response:', object);
+
       if (object.data?.content && 'fields' in object.data.content) {
         const fields = object.data.content.fields as any;
-        return {
+        console.log('🔍 Forest: Profile fields:', fields);
+        
+        const profile = {
           id: profileId,
           owner: fields.owner,
           username: fields.username,
@@ -433,9 +446,14 @@ export class Forest {
           next_link_id: fields.next_link_id || 0,
           link_count: fields.link_count || 0,
         };
+        
+        console.log('✅ Forest: Profile created successfully:', profile);
+        return profile;
+      } else {
+        console.log('❌ Forest: No content or fields in object:', object.data);
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('❌ Forest: Error fetching profile:', error);
     }
     return null;
   }

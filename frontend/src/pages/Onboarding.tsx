@@ -81,6 +81,7 @@ export function Onboarding() {
     }
   }, [username]);
 
+
   const handlePlatformToggle = (platformId: string) => {
     if (selectedPlatforms.includes(platformId)) {
       setSelectedPlatforms(selectedPlatforms.filter(p => p !== platformId));
@@ -106,6 +107,14 @@ export function Onboarding() {
     }
 
     try {
+      console.log('🔍 Onboarding: Creating profile with data:', {
+        username: username || 'user',
+        displayName: displayName || 'Anonymous',
+        bio: bio || '',
+        imageUrl: imageUrl || '',
+        subdomain: subdomain || 'user.forest.ee'
+      });
+      
       const result = await forest.createProfileWithDappKit(
         username || 'user',
         displayName || 'Anonymous',
@@ -115,7 +124,9 @@ export function Onboarding() {
         signAndExecuteTransaction
       );
       
+      console.log('✅ Onboarding: Profile created successfully:', result);
       localStorage.setItem('forest_profile_id', result.profileId);
+      console.log('💾 Onboarding: Profile ID saved to localStorage:', result.profileId);
       
       // Kullanıcı bilgilerini localStorage'a kaydet
       localStorage.setItem('forest_user_data', JSON.stringify({
@@ -156,6 +167,8 @@ export function Onboarding() {
       // Eğer profil henüz oluşturulmamışsa oluştur
       const storedProfileId = localStorage.getItem('forest_profile_id');
       if (!storedProfileId || storedProfileId.startsWith('temp_')) {
+        console.log('🔍 Onboarding: Creating new profile...');
+        
         const result = await forest.createProfileWithDappKit(
           username || 'user',
           displayName || 'Anonymous',
@@ -165,6 +178,7 @@ export function Onboarding() {
           signAndExecuteTransaction
         );
         
+        console.log('✅ Onboarding: Profile created, saving ID:', result.profileId);
         localStorage.setItem('forest_profile_id', result.profileId);
         
         saveProfile({
@@ -173,13 +187,16 @@ export function Onboarding() {
           profileImage: imageUrl || '',
           links: []
         });
+      } else {
+        console.log('✅ Onboarding: Profile already exists:', storedProfileId);
       }
       
       // Admin sayfasına yönlendir
       navigate('/admin');
     } catch (error) {
-      console.error('Error completing setup:', error);
-      alert('Setup completion failed. Please try again.');
+      console.error('❌ Onboarding: Error completing setup:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert('Setup completion failed: ' + errorMessage);
     }
   };
 
