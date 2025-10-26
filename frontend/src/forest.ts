@@ -10,7 +10,7 @@ const client = new SuiClient({ url: getFullnodeUrl('testnet') });
 const PACKAGE_ID = '0x69032fa43cd3308395b38bc1e5fbb414dbe482229ae9f79f9dd1d09dc67cdc5e';
 const MODULE_NAME = 'linktree';
 
-// Types for our smart contract
+// Types for our smart contract - Move koduna uygun
 export interface Profile {
   id: string;
   owner: string;
@@ -20,6 +20,7 @@ export interface Profile {
   image_url: string;
   subdomain: string;
   link_ids: number[];
+  next_link_id: number;
   link_count: number;
 }
 
@@ -408,7 +409,7 @@ export class Forest {
     };
   }
 
-  // Get profile data
+  // Get profile data - Move UserProfile struct'ına uygun
   async getProfile(profileId: string): Promise<Profile | null> {
     try {
       const object = await this.client.getObject({
@@ -429,6 +430,7 @@ export class Forest {
           image_url: fields.image_url,
           subdomain: fields.subdomain,
           link_ids: fields.link_ids || [],
+          next_link_id: fields.next_link_id || 0,
           link_count: fields.link_count || 0,
         };
       }

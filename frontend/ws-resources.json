@@ -1,0 +1,7 @@
+{
+    "site_name": "My Walrus Site",
+ "object_id": "0xfcafadd6894321705815d0b1f28246589d7e7127f52e417dc2338fa663a6e003",
+ "routes": {
+   "/": "index.html"
+ }
+}

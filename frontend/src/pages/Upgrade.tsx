@@ -4,19 +4,19 @@ import { useCurrentAccount } from '@mysten/dapp-kit';
 import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
 
-interface PremiumFeatures {
-  unlimitedLinks: boolean;
-  customThemes: boolean;
-  analytics: boolean;
-  prioritySupport: boolean;
-  customDomain: boolean;
-}
+// interface PremiumFeatures { // Removed - not used
+//   unlimitedLinks: boolean;
+//   customThemes: boolean;
+//   analytics: boolean;
+//   prioritySupport: boolean;
+//   customDomain: boolean;
+// }
 
 export function Upgrade() {
   const navigate = useNavigate();
   // Mysten Labs dapp-kit hooks kullanılıyor
   const currentAccount = useCurrentAccount();
-  const isConnected = !!currentAccount;
+  // const isConnected = !!currentAccount; // Removed - not used
   
   const [hasWALLLCoin, setHasWALLLCoin] = useState(false);
   const [hasMonkeyNFT, setHasMonkeyNFT] = useState(false);
@@ -24,13 +24,13 @@ export function Upgrade() {
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'free' | 'premium'>('free');
 
-  const premiumFeatures: PremiumFeatures = {
-    unlimitedLinks: true,
-    customThemes: true,
-    analytics: true,
-    prioritySupport: true,
-    customDomain: true
-  };
+  // const premiumFeatures: PremiumFeatures = { // Removed - not used
+  //   unlimitedLinks: true,
+  //   customThemes: true,
+  //   analytics: true,
+  //   prioritySupport: true,
+  //   customDomain: true
+  // };
 
   useEffect(() => {
     checkEligibility();

@@ -4,7 +4,7 @@ import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
 import { Input } from '../components/common/Input';
-import { ProfileUpdateModal } from '../components/common/ProfileUpdateModal';
+// import { ProfileUpdateModal } from '../components/common/ProfileUpdateModal'; // Removed - not used
 import { forest } from '../forest';
 import {
   DndContext,
@@ -27,14 +27,14 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 
 interface Web3Link {
-  id: number; // string değil u64
+  id: number; // u64 from Move contract
   profile_id: string;
   type: 'wallet' | 'nft' | 'defi' | 'social' | 'custom';
   title: string;
   url: string;
   icon: string;
   banner: string;
-  isActive: boolean;
+  is_active: boolean; // Move contract field name
   order: number;
   blockchain?: string;
   contractAddress?: string;
@@ -49,7 +49,7 @@ export function Admin() {
   const [activeTab, setActiveTab] = useState('links');
   const [links, setLinks] = useState<Web3Link[]>([]);
   const [isAddLinkModalOpen, setIsAddLinkModalOpen] = useState(false);
-  const [isProfileUpdateModalOpen, setIsProfileUpdateModalOpen] = useState(false);
+  // const [isProfileUpdateModalOpen, setIsProfileUpdateModalOpen] = useState(false); // Removed - not used
   const [editingLink, setEditingLink] = useState<Web3Link | null>(null);
   const [newLink, setNewLink] = useState({
     title: '',
@@ -109,26 +109,27 @@ export function Admin() {
 
       setProfileId(storedProfileId);
       
-      // Profil verilerini kontraktan çek
+      // Profil verilerini kontraktan çek - sadece onchain veri
       const profileData = await forest.getProfile(storedProfileId);
+      
       if (!profileData) {
-        setError('Profil bulunamadı.');
+        setError('Profil blockchain\'de bulunamadı. Lütfen önce profil oluşturun.');
         return;
       }
       
       // Link'leri çek (dynamic fields'dan)
       const profileLinks = await forest.getProfileLinks(storedProfileId);
       
-      // Web3Link formatına dönüştür
+      // Web3Link formatına dönüştür - Move contract verilerini kullan
       const web3Links: Web3Link[] = profileLinks.map(link => ({
-        id: link.id, // number
+        id: link.id, // u64 from Move contract
         profile_id: storedProfileId,
-        type: 'custom',
+        type: 'custom', // Default type, can be enhanced later
         title: link.title,
         url: link.url,
         icon: link.icon,
         banner: link.banner,
-        isActive: link.is_active,
+        is_active: link.is_active, // Move contract field name
         order: link.order,
       }));
       
@@ -180,7 +181,7 @@ export function Admin() {
       setError('');
 
       // Yeni link'in sırasını belirle (mevcut link sayısı + 1)
-      const newOrder = links.length + 1;
+      // const newOrder = links.length + 1; // Removed - not used
 
       const result = await forest.addLinkWithDappKit(
         profileId,
@@ -288,7 +289,7 @@ export function Admin() {
       await forest.toggleLinkWithDappKit(
         profileId,
         linkId,
-        !link.isActive,
+        !link.is_active,
         signAndExecuteTransaction
       );
 
@@ -302,55 +303,16 @@ export function Admin() {
     }
   };
 
-  // Profile update fonksiyonu
-  const handleProfileUpdate = async (displayName: string, bio: string, imageUrl: string, subdomain: string) => {
-    if (!profileId) return;
-
-    try {
-      setIsLoading(true);
-      setError('');
-
-      // Profile bilgilerini güncelle
-      await forest.updateProfileWithDappKit(
-        profileId,
-        displayName,
-        bio,
-        signAndExecuteTransaction
-      );
-
-      // Profile image güncelle
-      if (imageUrl !== profileSettings.profileImage) {
-        await forest.updateProfileImageWithDappKit(
-          profileId,
-          imageUrl,
-          signAndExecuteTransaction
-        );
-      }
-
-      // Subdomain güncelle
-      if (subdomain !== profileSettings.customDomain) {
-        await forest.updateSubdomainWithDappKit(
-          profileId,
-          subdomain,
-          signAndExecuteTransaction
-        );
-      }
-
-      // Profil güncellendi - reload et
-      await loadProfileData();
-      setIsProfileUpdateModalOpen(false);
-    } catch (err) {
-      console.error('Profile güncellenirken hata:', err);
-      setError('Profile güncellenirken bir hata oluştu.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Profile update fonksiyonu - Removed - not used
+  // const handleProfileUpdate = async (displayName: string, bio: string, imageUrl: string, subdomain: string) => {
+  //   if (!profileId) return;
+  //   // ... implementation removed
+  // };
 
   const handleCloseModal = () => {
     setIsAddLinkModalOpen(false);
     setEditingLink(null);
-    setNewLink({ title: '', url: '', type: 'custom', blockchain: '', contractAddress: '', tokenId: '' });
+    setNewLink({ title: '', url: '', icon: '', banner: '', type: 'custom', blockchain: '', contractAddress: '', tokenId: '' });
   };
 
   // Optimized drag end handler with useCallback - akıllı kontraktla entegre
@@ -612,12 +574,7 @@ export function Admin() {
                     {profileSettings.bio || 'Profil bilgileri yükleniyor...'}
                   </p>
                 </div>
-                <button
-                  onClick={() => setIsProfileUpdateModalOpen(true)}
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
-                >
-                  Edit Profile
-                </button>
+                {/* Edit Profile button removed - not used */}
               </div>
               
 
@@ -722,7 +679,7 @@ export function Admin() {
               
               {/* Links Section */}
               <div className="space-y-2 mb-4">
-                {links.filter(link => link.isActive).map((link) => (
+                {links.filter(link => link.is_active).map((link) => (
                   <button 
                     key={link.id}
                     onClick={() => window.open(link.url, '_blank')}
@@ -865,8 +822,8 @@ export function Admin() {
 const SortableLink = React.memo(({ link, onEdit, onDelete, onToggle }: {
   link: Web3Link;
   onEdit: (link: Web3Link) => void;
-  onDelete: (linkId: string) => void;
-  onToggle: (linkId: string) => void;
+  onDelete: (linkId: number) => void;
+  onToggle: (linkId: number) => void;
 }) => {
   const {
     attributes,
@@ -972,13 +929,13 @@ const SortableLink = React.memo(({ link, onEdit, onDelete, onToggle }: {
               <button
                 onClick={handleToggle}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 ${
-                  link.isActive ? 'bg-green-500 shadow-sm' : 'bg-gray-300'
+                  link.is_active ? 'bg-green-500 shadow-sm' : 'bg-gray-300'
                 }`}
                 type="button"
               >
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
-                    link.isActive ? 'translate-x-6' : 'translate-x-1'
+                    link.is_active ? 'translate-x-6' : 'translate-x-1'
                   }`}
                 />
               </button>
@@ -1007,24 +964,8 @@ const SortableLink = React.memo(({ link, onEdit, onDelete, onToggle }: {
         </div>
       </div>
 
-      {/* Profile Update Modal */}
-      <ProfileUpdateModal
-        isOpen={isProfileUpdateModalOpen}
-        onClose={() => setIsProfileUpdateModalOpen(false)}
-        profile={profileSettings ? {
-          id: profileId || '',
-          owner: '',
-          username: '',
-          display_name: profileSettings.displayName,
-          bio: profileSettings.bio,
-          image_url: profileSettings.profileImage,
-          subdomain: profileSettings.customDomain,
-          link_ids: [],
-          link_count: 0
-        } : null}
-        onUpdate={handleProfileUpdate}
-        isLoading={isLoading}
-      />
+      {/* Profile Update Modal - Removed - not used */}
+      {/* <ProfileUpdateModal ... /> */}
     </div>
   );
 });

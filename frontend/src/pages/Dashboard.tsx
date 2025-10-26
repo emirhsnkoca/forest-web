@@ -33,8 +33,9 @@ export function Dashboard() {
           return;
         }
 
-        // Profile'ı blockchain'den çek
+        // Profile'ı blockchain'den çek - sadece onchain veri
         const profileData = await forest.getProfile(storedProfileId);
+        
         if (!profileData) {
           navigate('/onboarding');
           return;

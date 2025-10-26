@@ -117,6 +117,18 @@ export function Onboarding() {
       
       localStorage.setItem('forest_profile_id', result.profileId);
       
+      // Kullanıcı bilgilerini localStorage'a kaydet
+      localStorage.setItem('forest_user_data', JSON.stringify({
+        username: username || 'user',
+        displayName: displayName || 'Anonymous',
+        bio: bio || '',
+        imageUrl: imageUrl || '',
+        subdomain: subdomain || 'user.forest.ee',
+        goal: goal,
+        selectedPlatforms: selectedPlatforms,
+        platformLinks: platformLinks
+      }));
+      
       saveProfile({
         displayName: displayName || 'Anonymous',
         bio: bio || '',
@@ -128,6 +140,46 @@ export function Onboarding() {
     } catch (error) {
       console.error('Error:', error);
       alert('Profile creation failed. Please try again.');
+    }
+  };
+
+  const handleCompleteSetup = async () => {
+    console.log('Complete Setup clicked - navigating to admin...');
+    
+    // Profil oluşturma işlemini tamamla
+    if (!currentWallet) {
+      alert('Please connect your wallet first!');
+      return;
+    }
+
+    try {
+      // Eğer profil henüz oluşturulmamışsa oluştur
+      const storedProfileId = localStorage.getItem('forest_profile_id');
+      if (!storedProfileId || storedProfileId.startsWith('temp_')) {
+        const result = await forest.createProfileWithDappKit(
+          username || 'user',
+          displayName || 'Anonymous',
+          bio || '',
+          imageUrl || '',
+          subdomain || 'user.forest.ee',
+          signAndExecuteTransaction
+        );
+        
+        localStorage.setItem('forest_profile_id', result.profileId);
+        
+        saveProfile({
+          displayName: displayName || 'Anonymous',
+          bio: bio || '',
+          profileImage: imageUrl || '',
+          links: []
+        });
+      }
+      
+      // Admin sayfasına yönlendir
+      navigate('/admin');
+    } catch (error) {
+      console.error('Error completing setup:', error);
+      alert('Setup completion failed. Please try again.');
     }
   };
 
@@ -490,7 +542,7 @@ export function Onboarding() {
               </div>
 
               <Button 
-                onClick={() => navigate('/admin')} 
+                onClick={handleCompleteSetup} 
                 fullWidth
                 className="!bg-white !text-primary hover:!bg-white/90 !shadow-xl !py-4 !text-lg !font-bold"
               >
