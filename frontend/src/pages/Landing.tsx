@@ -199,7 +199,7 @@ export function Landing() {
             onClick={handleGetStarted} 
             className="bg-primary hover:bg-primary-dark text-white font-bold text-lg px-10 py-4 rounded-full shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 animate-fade-in animate-delay-200"
           >
-            {suiAccount && suiWallet ? '🚀 Continue to Onboarding' : '🚀 Get Started for Free'}
+            {suiAccount && suiWallet ? 'Continue to Onboarding' : 'Get Started for Free'}
           </Button>
           
           {/* Video Placeholder / Future Integration */}

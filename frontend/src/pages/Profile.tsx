@@ -117,9 +117,13 @@ export function Profile() {
     window.open(url, '_blank');
   };
 
+  // Donate link'ini kontrol et
+  const donateLink = activeLinks.find(link => link.title.toLowerCase().includes('donate'));
+  const otherLinks = activeLinks.filter(link => !link.title.toLowerCase().includes('donate'));
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 py-12">
-      <div className="container mx-auto px-4 max-w-2xl">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 overflow-y-auto">
+      <div className="container mx-auto px-4 max-w-2xl py-6 pb-32 min-h-screen">
         {/* Profil İstatistikleri */}
         <div className="bg-white rounded-2xl p-4 mb-6 shadow-sm border border-gray-200">
           <div className="flex justify-center gap-8 text-center">
@@ -217,7 +221,26 @@ export function Profile() {
               </div>
             ) : (
               <>
-                {activeLinks.map((link) => (
+                {/* Donate Button - Özel Stil */}
+                {donateLink && (
+                  <button
+                    onClick={() => handleLinkClick(donateLink.id, donateLink.url)}
+                    className="block w-full p-4 bg-gradient-to-r from-green-500 to-emerald-600 border-2 border-green-400 rounded-2xl hover:border-green-500 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 text-center font-semibold text-white group"
+                  >
+                    <div className="flex items-center justify-center gap-3">
+                      <span className="text-xl group-hover:scale-110 transition-transform">💰</span>
+                      <span className="group-hover:text-green-100 transition-colors">Support {profile?.displayName}</span>
+                    </div>
+                    {linkClicks[donateLink.id] > 0 && (
+                      <div className="mt-2 text-xs text-green-100">
+                        {linkClicks[donateLink.id]} donations
+                      </div>
+                    )}
+                  </button>
+                )}
+
+                {/* Diğer Linkler */}
+                {otherLinks.map((link) => (
                   <button
                     key={link.id}
                     onClick={() => handleLinkClick(link.id, link.url)}
@@ -238,15 +261,6 @@ export function Profile() {
             )}
           </div>
 
-          {/* Footer */}
-          <div className="mt-12 pt-6 border-t border-gray-200 text-center">
-            <a
-              href="/"
-              className="text-primary hover:text-primary-dark font-medium"
-            >
-              Create your own Forest profile →
-            </a>
-          </div>
         </div>
       </div>
     </div>

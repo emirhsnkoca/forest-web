@@ -1,8 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
 import { Input } from '../components/common/Input';
 import { forest } from '../forest';
+import { 
+  FaXTwitter, 
+  FaTelegram, 
+  FaYoutube, 
+  FaInstagram, 
+  FaGlobe, 
+  FaSpotify, 
+  FaWhatsapp, 
+  FaFacebook, 
+  FaTiktok, 
+  FaPinterest, 
+  FaThreads, 
+  FaSnapchat 
+} from 'react-icons/fa6';
 import {
   DndContext,
   closestCenter,
@@ -46,6 +61,31 @@ function SortableLink({ link, onDelete, onEdit, isLoading }: {
   isLoading: boolean;
 }) {
   const [showMenu, setShowMenu] = useState(false);
+
+  // Icon mapping function
+  const getIconComponent = (iconString: string) => {
+    const iconMap: { [key: string]: React.ComponentType<{ className?: string }> } = {
+      'x': FaXTwitter,
+      'twitter': FaXTwitter,
+      'telegram': FaTelegram,
+      'youtube': FaYoutube,
+      'instagram': FaInstagram,
+      'website': FaGlobe,
+      'personal website': FaGlobe,
+      'spotify': FaSpotify,
+      'whatsapp': FaWhatsapp,
+      'facebook': FaFacebook,
+      'tiktok': FaTiktok,
+      'pinterest': FaPinterest,
+      'threads': FaThreads,
+      'snapchat': FaSnapchat,
+    };
+
+    const IconComponent = iconMap[iconString.toLowerCase()];
+    return IconComponent || null;
+  };
+
+  const IconComponent = getIconComponent(link.icon);
 
   const {
     attributes,
@@ -94,7 +134,11 @@ function SortableLink({ link, onDelete, onEdit, isLoading }: {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-amber-200 rounded-lg flex items-center justify-center">
-            <span className="text-lg">{link.icon || '🔗'}</span>
+            {IconComponent ? (
+              <IconComponent className="text-lg text-gray-700" />
+            ) : (
+              <span className="text-lg">{link.icon || '🔗'}</span>
+            )}
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -109,13 +153,6 @@ function SortableLink({ link, onDelete, onEdit, isLoading }: {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 text-gray-500 text-sm">
-            <span>📊</span>
-            <span>📤</span>
-            <span>⭐</span>
-            <span>🔒</span>
-            <span>0 clicks</span>
-          </div>
           <button className="text-gray-400 hover:text-gray-600">📤</button>
           <button 
             className={`w-12 h-6 rounded-full border-2 flex items-center justify-center ${
@@ -149,6 +186,7 @@ function SortableLink({ link, onDelete, onEdit, isLoading }: {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
+                    console.log('🔍 SortableLink: Edit button clicked for link:', link);
                     onEdit(link);
                     setShowMenu(false);
                   }}
@@ -159,6 +197,7 @@ function SortableLink({ link, onDelete, onEdit, isLoading }: {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
+                    console.log('🔍 SortableLink: Delete button clicked for linkId:', link.id);
                     onDelete(link.id);
                     setShowMenu(false);
                   }}
@@ -180,6 +219,29 @@ export function Admin() {
   // Mock Forest kullanıyoruz, cüzdan hooks'ları gerekli değil
   // const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   // const currentAccount = useCurrentAccount();
+  
+  // Icon mapping function
+  const getIconComponent = (iconString: string) => {
+    const iconMap: { [key: string]: React.ComponentType<{ className?: string }> } = {
+      'x': FaXTwitter,
+      'twitter': FaXTwitter,
+      'telegram': FaTelegram,
+      'youtube': FaYoutube,
+      'instagram': FaInstagram,
+      'website': FaGlobe,
+      'personal website': FaGlobe,
+      'spotify': FaSpotify,
+      'whatsapp': FaWhatsapp,
+      'facebook': FaFacebook,
+      'tiktok': FaTiktok,
+      'pinterest': FaPinterest,
+      'threads': FaThreads,
+      'snapchat': FaSnapchat,
+    };
+
+    const IconComponent = iconMap[iconString.toLowerCase()];
+    return IconComponent || null;
+  };
   
   const [links, setLinks] = useState<Web3Link[]>([]);
   const [isAddLinkModalOpen, setIsAddLinkModalOpen] = useState(false);
@@ -387,29 +449,29 @@ export function Admin() {
         console.log('✅ Admin: Link updated successfully:', result);
       } else {
         // Add mode - yeni link ekle
-        console.log('🔍 Admin: Adding new link:', {
-          profileId,
-          title: newLink.title,
-          url: newLink.url,
-          icon: newLink.icon || '🔗',
-          banner: newLink.banner || ''
-        });
+      console.log('🔍 Admin: Adding new link:', {
+        profileId,
+        title: newLink.title,
+        url: newLink.url,
+        icon: newLink.icon || '🔗',
+        banner: newLink.banner || ''
+      });
 
-        const result = await forest.addLinkWithDappKit(
-          profileId,
-          newLink.title,
-          newLink.url,
-          newLink.icon || '🔗',
-          newLink.banner || '',
+      const result = await forest.addLinkWithDappKit(
+        profileId,
+        newLink.title,
+        newLink.url,
+        newLink.icon || '🔗',
+        newLink.banner || '',
           null // Mock Forest için signAndExecuteTransaction gerekli değil
-        );
+      );
 
-        console.log('✅ Admin: Link added successfully:', result);
+      console.log('✅ Admin: Link added successfully:', result);
       }
 
       // UI'yi temizle ve güncelle
       setNewLink({ title: '', url: '', icon: '', banner: '', type: 'custom', blockchain: '', contractAddress: '', tokenId: '', platform: '' });
-      setIsAddLinkModalOpen(false);
+        setIsAddLinkModalOpen(false);
       setIsEditMode(false);
       setEditingLinkId(null);
       
@@ -526,6 +588,8 @@ export function Admin() {
   // Link düzenleme fonksiyonu
   const handleEditLink = (link: Web3Link) => {
     console.log('🔍 Admin: Editing link:', link);
+    console.log('🔍 Admin: Current profileId:', profileId);
+    console.log('🔍 Admin: Current links:', links);
     
     // Edit mode'u aktif et
     setIsEditMode(true);
@@ -548,9 +612,16 @@ export function Admin() {
     setIsAddLinkModalOpen(true);
     
     console.log('✅ Admin: Edit modal opened with link data');
+    console.log('✅ Admin: isEditMode set to true');
+    console.log('✅ Admin: editingLinkId set to:', link.id);
   };
   const handleDeleteLink = async (linkId: number) => {
+    console.log('🔍 Admin: handleDeleteLink called with linkId:', linkId);
+    console.log('🔍 Admin: Current profileId:', profileId);
+    console.log('🔍 Admin: Current links:', links);
+    
     if (!profileId) {
+      console.log('❌ Admin: No profileId found');
       setError('Profil ID bulunamadı.');
       return;
     }
@@ -559,7 +630,11 @@ export function Admin() {
     const linkToDelete = links.find(link => link.id === linkId);
     const linkTitle = linkToDelete?.title || 'this link';
     
+    console.log('🔍 Admin: Link to delete:', linkToDelete);
+    console.log('🔍 Admin: Link title:', linkTitle);
+    
     if (!confirm(`Are you sure you want to delete "${linkTitle}"? This action cannot be undone.`)) {
+      console.log('❌ Admin: User cancelled deletion');
       return;
     }
 
@@ -583,6 +658,82 @@ export function Admin() {
     } catch (err) {
       console.error('❌ Admin: Link silinirken hata:', err);
       const errorMessage = err instanceof Error ? err.message : 'Link silinirken bir hata oluştu.';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // My NFTs link ekleme fonksiyonu
+  const handleAddNFTsLink = async () => {
+    console.log('🔍 Admin: Adding My NFTs link');
+    
+    if (!profileId) {
+      setError('Profile ID not found.');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError('');
+
+      // NFT link'i ekle
+      const result = await forest.addLinkWithDappKit(
+        profileId,
+        'My NFTs',
+        '/nfts', // Subdomain URL
+        '🖼️',
+        '',
+        null // Mock Forest için signAndExecuteTransaction gerekli değil
+      );
+
+      console.log('✅ Admin: My NFTs link added successfully:', result);
+
+      // Modal'ı kapat ve UI'yi güncelle
+      setIsAddLinkModalOpen(false);
+      loadProfileData();
+      console.log('✅ Admin: My NFTs link added, UI updated');
+    } catch (err) {
+      console.error('❌ Admin: Error adding My NFTs link:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Error adding My NFTs link.';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Donate link ekleme fonksiyonu
+  const handleAddDonateLink = async () => {
+    console.log('🔍 Admin: Adding Donate link');
+    
+    if (!profileId) {
+      setError('Profile ID not found.');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError('');
+
+      // Donate link'i ekle
+      const result = await forest.addLinkWithDappKit(
+        profileId,
+        'Donate',
+        '/donate', // Subdomain URL
+        '💰',
+        '',
+        null // Mock Forest için signAndExecuteTransaction gerekli değil
+      );
+
+      console.log('✅ Admin: Donate link added successfully:', result);
+
+      // Modal'ı kapat ve UI'yi güncelle
+      setIsAddLinkModalOpen(false);
+      loadProfileData();
+      console.log('✅ Admin: Donate link added, UI updated');
+    } catch (err) {
+      console.error('❌ Admin: Error adding Donate link:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Error adding Donate link.';
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -641,20 +792,6 @@ export function Admin() {
           </div>
 
           {/* Setup Checklist */}
-          <div className="p-4 border-t border-amber-600 relative z-10">
-            <div className="bg-amber-800 border-2 border-amber-600 rounded-lg p-4 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-green-400">
-                  33%
-                </div>
-                <span className="text-sm font-medium text-white drop-shadow-lg">Your setup checklist</span>
-              </div>
-              <p className="text-xs text-amber-200 mb-3">2 of 6 complete</p>
-              <button className="w-full bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-green-500 transition-colors border-2 border-green-500 shadow-lg">
-                Finish setup
-              </button>
-            </div>
-          </div>
 
           {/* Help Icons */}
           <div className="p-4 border-t border-amber-600 relative z-10">
@@ -944,7 +1081,11 @@ export function Admin() {
                         >
                           <div className="flex items-center gap-4">
                             <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+                              {getIconComponent(link.icon) ? (
+                                React.createElement(getIconComponent(link.icon)!, { className: "text-white text-lg" })
+                              ) : (
                               <span className="text-white text-lg">{link.icon || '🔗'}</span>
+                              )}
                             </div>
                             <div className="flex-1 min-w-0">
                               <h3 className="font-bold text-gray-900 text-base group-hover:text-green-700 transition-colors truncate">
@@ -1011,6 +1152,45 @@ export function Admin() {
               <option value="defi">DeFi Portfolio</option>
               <option value="social">Social Media</option>
             </select>
+          </div>
+
+          {/* Quick Add Buttons */}
+          <div className="space-y-3">
+            {/* My NFTs Quick Add Button */}
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-medium text-purple-900">NFT Gallery</h3>
+                  <p className="text-xs text-purple-700 mt-1">Add your NFTs with one click</p>
+                </div>
+                <button
+                  onClick={() => handleAddNFTsLink()}
+                  disabled={isLoading}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <span>🖼️</span>
+                  My NFTs
+                </button>
+              </div>
+            </div>
+
+            {/* Donate Quick Add Button */}
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-medium text-green-900">Donation</h3>
+                  <p className="text-xs text-green-700 mt-1">Accept donations from visitors</p>
+                </div>
+                <button
+                  onClick={() => handleAddDonateLink()}
+                  disabled={isLoading}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <span>💰</span>
+                  Donate
+                </button>
+              </div>
+            </div>
           </div>
 
           <Input

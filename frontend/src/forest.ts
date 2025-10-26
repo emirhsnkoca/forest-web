@@ -1,6 +1,12 @@
 // Mock Forest - localStorage tabanlı çalışan versiyon
 // Gerçek blockchain işlemleri yerine localStorage kullanır
 
+import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
+import { Transaction } from '@mysten/sui/transactions';
+
+// Sui client instance
+const suiClient = new SuiClient({ url: getFullnodeUrl('testnet') });
+
 // Types for our smart contract - Move koduna uygun
 export interface Profile {
   id: string;
@@ -422,7 +428,7 @@ export class Forest {
     const profile = this.profiles.get(profileId);
     if (profile) {
       console.log('✅ Mock Forest: Profile found:', profile);
-      return profile;
+        return profile;
     }
 
     console.log('❌ Mock Forest: Profile not found:', profileId);
@@ -537,6 +543,350 @@ export class Forest {
       console.log('🌲 Mock Forest: Data imported successfully');
     } catch (error) {
       console.error('🌲 Mock Forest: Error importing data:', error);
+      throw error;
+    }
+  }
+
+  // Get profile by username
+  async getProfileByUsername(username: string): Promise<any> {
+    try {
+      console.log('🌲 Mock Forest: Getting profile by username:', username);
+      
+      // localStorage'dan tüm profilleri çek
+      const profilesData = localStorage.getItem('forest_profiles');
+      if (profilesData) {
+        const profiles = JSON.parse(profilesData);
+        
+        // Username ile profil ara
+        for (const [profileId, profile] of Object.entries(profiles)) {
+          if (profile.username === username) {
+            console.log('🌲 Mock Forest: Found profile:', profile.displayName);
+            return profile;
+          }
+        }
+      }
+
+      // Eğer profil bulunamazsa mock data döndür (development için)
+      console.log('🌲 Mock Forest: Profile not found, returning mock data');
+      const mockProfile = {
+        id: '1',
+        walletAddress: '0x1234567890abcdef',
+        displayName: username,
+        bio: 'NFT collector and digital art enthusiast',
+        profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+        theme: 'green',
+        createdAt: Date.now()
+      };
+
+      return mockProfile;
+    } catch (error) {
+      console.error('🌲 Mock Forest: Error getting profile by username:', error);
+      throw error;
+    }
+  }
+
+  // NFT Functions - Real Sui blockchain integration
+  async getNFTsByOwner(ownerAddress: string): Promise<any[]> {
+    try {
+      console.log('🌲 Forest: Getting NFTs for owner:', ownerAddress);
+      
+      // Sui blockchain'den tüm owned objects'leri çek
+      const ownedObjects = await suiClient.getOwnedObjects({
+        owner: ownerAddress,
+        options: {
+          showContent: true,
+          showDisplay: true,
+          showType: true,
+        }
+      });
+
+      console.log('🌲 Forest: Found objects:', ownedObjects.data.length);
+
+      const nfts = [];
+      
+      for (const obj of ownedObjects.data) {
+        try {
+          // Object type'ını kontrol et - NFT olup olmadığını belirle
+          const objectType = obj.data?.type;
+          if (!objectType) continue;
+
+          // NFT olabilecek type'ları kontrol et
+          const isNFT = this.isNFTObject(objectType);
+          if (!isNFT) continue;
+
+          // Object content'ini al
+          const content = obj.data?.content;
+          if (!content || !('fields' in content)) continue;
+
+          const fields = content.fields;
+          
+          // NFT metadata'sını çıkar
+          const nft = {
+            id: obj.data?.objectId || '',
+            name: this.extractNFTName(fields),
+            description: this.extractNFTDescription(fields),
+            image: this.extractNFTImage(fields),
+            collection: this.extractNFTCollection(fields, objectType),
+            tokenId: this.extractTokenId(fields),
+            contractAddress: objectType.split('::')[0] || '',
+            rarity: this.extractRarity(fields),
+            attributes: this.extractAttributes(fields)
+          };
+
+          nfts.push(nft);
+        } catch (error) {
+          console.warn('🌲 Forest: Error processing NFT:', error);
+          continue;
+        }
+      }
+
+      // Eğer hiç NFT bulunamazsa mock data döndür (development için)
+      if (nfts.length === 0) {
+        console.log('🌲 Forest: No NFTs found, returning mock data for development');
+        return this.getMockNFTs();
+      }
+
+      console.log('🌲 Forest: Returning NFTs:', nfts.length);
+      return nfts;
+    } catch (error) {
+      console.error('🌲 Forest: Error getting NFTs:', error);
+      
+      // Hata durumunda mock data döndür
+      console.log('🌲 Forest: Error occurred, returning mock data');
+      return this.getMockNFTs();
+    }
+  }
+
+  // NFT object type'ını kontrol et
+  private isNFTObject(objectType: string): boolean {
+    const nftKeywords = ['nft', 'token', 'collectible', 'art', 'image'];
+    const typeLower = objectType.toLowerCase();
+    
+    return nftKeywords.some(keyword => typeLower.includes(keyword)) ||
+           typeLower.includes('0x2::nft') ||
+           typeLower.includes('0x2::token');
+  }
+
+  // NFT name'ini çıkar
+  private extractNFTName(fields: any): string {
+    return fields.name || 
+           fields.title || 
+           fields.display_name || 
+           fields.token_name || 
+           'Unnamed NFT';
+  }
+
+  // NFT description'ını çıkar
+  private extractNFTDescription(fields: any): string {
+    return fields.description || 
+           fields.desc || 
+           fields.bio || 
+           'No description available';
+  }
+
+  // NFT image'ını çıkar
+  private extractNFTImage(fields: any): string {
+    return fields.url || 
+           fields.image_url || 
+           fields.image || 
+           fields.uri || 
+           fields.media_url || 
+           '';
+  }
+
+  // NFT collection'ını çıkar
+  private extractNFTCollection(fields: any, objectType: string): string {
+    return fields.collection || 
+           fields.collection_name || 
+           fields.series || 
+           objectType.split('::')[1] || 
+           'Unknown Collection';
+  }
+
+  // Token ID'yi çıkar
+  private extractTokenId(fields: any): string {
+    return fields.id || 
+           fields.token_id || 
+           fields.index || 
+           fields.number || 
+           '';
+  }
+
+  // Rarity'yi çıkar
+  private extractRarity(fields: any): string {
+    return fields.rarity || 
+           fields.rank || 
+           fields.tier || 
+           'Common';
+  }
+
+  // Attributes'ları çıkar
+  private extractAttributes(fields: any): any[] {
+    if (fields.attributes && Array.isArray(fields.attributes)) {
+      return fields.attributes;
+    }
+    
+    if (fields.properties && Array.isArray(fields.properties)) {
+      return fields.properties;
+    }
+
+    if (fields.traits && Array.isArray(fields.traits)) {
+      return fields.traits;
+    }
+
+    return [];
+  }
+
+  // Mock NFT data for development
+  private getMockNFTs(): any[] {
+    console.log('🌲 Forest: Returning mock NFTs for development');
+    return [
+      {
+        id: '1',
+        name: 'Forest Guardian #1',
+        description: 'A mystical guardian of the digital forest',
+        image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=400&fit=crop',
+        collection: 'Forest Guardians',
+        tokenId: '1',
+        contractAddress: '0x123...abc',
+        rarity: 'Rare',
+        attributes: [
+          { trait_type: 'Background', value: 'Forest' },
+          { trait_type: 'Eyes', value: 'Glowing' },
+          { trait_type: 'Power', value: '85' }
+        ]
+      },
+      {
+        id: '2',
+        name: 'Digital Tree #42',
+        description: 'A unique digital tree growing in the metaverse',
+        image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop',
+        collection: 'Digital Nature',
+        tokenId: '42',
+        contractAddress: '0x456...def',
+        rarity: 'Common',
+        attributes: [
+          { trait_type: 'Type', value: 'Oak' },
+          { trait_type: 'Height', value: 'Tall' },
+          { trait_type: 'Age', value: 'Ancient' }
+        ]
+      },
+      {
+        id: '3',
+        name: 'Crypto Wolf #7',
+        description: 'A fierce wolf roaming the blockchain wilderness',
+        image: 'https://images.unsplash.com/photo-1605568427561-40dd23c2acea?w=400&h=400&fit=crop',
+        collection: 'Wild Crypto',
+        tokenId: '7',
+        contractAddress: '0x789...ghi',
+        rarity: 'Epic',
+        attributes: [
+          { trait_type: 'Fur', value: 'Silver' },
+          { trait_type: 'Eyes', value: 'Blue' },
+          { trait_type: 'Strength', value: '95' }
+        ]
+      }
+    ];
+  }
+
+  async getNFTMetadata(nftId: string): Promise<any> {
+    try {
+      console.log('🌲 Mock Forest: Getting NFT metadata for:', nftId);
+      
+      // Mock metadata - gerçek implementasyonda IPFS'ten çekilecek
+      const mockMetadata = {
+        name: 'Forest Guardian #1',
+        description: 'A mystical guardian of the digital forest',
+        image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=400&fit=crop',
+        external_url: 'https://forest-web.com/nft/1',
+        attributes: [
+          { trait_type: 'Background', value: 'Forest' },
+          { trait_type: 'Eyes', value: 'Glowing' },
+          { trait_type: 'Power', value: '85' }
+        ]
+      };
+
+      console.log('🌲 Mock Forest: Returning NFT metadata');
+      return mockMetadata;
+    } catch (error) {
+      console.error('🌲 Mock Forest: Error getting NFT metadata:', error);
+      throw error;
+    }
+  }
+
+  // Donate Functions - Real Sui blockchain integration
+  async sendDonation(
+    fromAddress: string,
+    toAddress: string,
+    amount: number,
+    signAndExecuteTransaction: any
+  ): Promise<any> {
+    try {
+      console.log('🌲 Forest: Sending donation:', {
+        from: fromAddress,
+        to: toAddress,
+        amount: amount
+      });
+
+      // Sui blockchain'de SUI transfer transaction'ı oluştur
+      const txb = new Transaction();
+      
+      // SUI transfer işlemi
+      const [coin] = txb.splitCoins(txb.gas, [txb.pure.u64(amount * 1_000_000_000)]); // SUI to MIST conversion
+      txb.transferObjects([coin], toAddress);
+
+      console.log('🌲 Forest: Transaction created, executing...');
+
+      // Transaction'ı imzala ve gönder
+      const result = await signAndExecuteTransaction({
+        transaction: txb,
+        options: {
+          showEffects: true,
+          showObjectChanges: true,
+      },
+    });
+
+      console.log('✅ Forest: Donation sent successfully:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Forest: Error sending donation:', error);
+      throw error;
+    }
+  }
+
+  // Mock donate function for development
+  async sendDonationMock(
+    fromAddress: string,
+    toAddress: string,
+    amount: number
+  ): Promise<any> {
+    try {
+      console.log('🌲 Mock Forest: Mock donation:', {
+        from: fromAddress,
+        to: toAddress,
+        amount: amount
+      });
+
+      // Mock donation data'yı localStorage'a kaydet
+      const donationsData = localStorage.getItem('forest_donations') || '[]';
+      const donations = JSON.parse(donationsData);
+      
+      const newDonation = {
+        id: Date.now().toString(),
+        from: fromAddress,
+        to: toAddress,
+        amount: amount,
+        timestamp: Date.now(),
+        status: 'completed'
+      };
+
+      donations.push(newDonation);
+      localStorage.setItem('forest_donations', JSON.stringify(donations));
+
+      console.log('✅ Mock Forest: Mock donation recorded:', newDonation);
+      return newDonation;
+    } catch (error) {
+      console.error('❌ Mock Forest: Error recording mock donation:', error);
       throw error;
     }
   }
