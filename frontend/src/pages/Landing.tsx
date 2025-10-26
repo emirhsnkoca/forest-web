@@ -104,13 +104,18 @@ export function Landing() {
       {/* Hero Section with Pixel Green Background */}
       <Background type="pixel-green" className="py-20 md:py-32">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-5xl md:text-7xl font-bold text-primary-darker mb-6 animate-fade-in">
-            Grow Your Digital Forest 🌲
-          </h1>
+          <div className="flex items-center justify-center gap-4 mb-6 animate-fade-in">
+            <img 
+              src="/logos/main/forest-logo.png" 
+              alt="Forest Logo" 
+              className="w-16 h-16 md:w-20 md:h-20 object-contain"
+            />
+            <h1 className="text-5xl md:text-7xl font-bold text-primary-darker">
+              Grow Your Digital Forest
+            </h1>
+          </div>
           <p className="text-xl md:text-2xl text-gray-700 mb-8 max-w-3xl mx-auto leading-relaxed animate-fade-in animate-delay-100">
-            The Web3 link-in-bio platform built on Sui blockchain.
-            <br />
-            Share your links, showcase NFTs, and accept donations—all in one place.
+            All links in one
           </p>
           
           {/* Wallet Connection Status */}

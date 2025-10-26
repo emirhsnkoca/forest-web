@@ -23,8 +23,12 @@ export function Navbar({ onLoginClick: _onLoginClick }: NavbarProps) {
         <div className="flex items-center justify-between">
           {/* Logo & Brand */}
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center shadow-md">
-              <span className="text-white font-bold text-2xl">🌲</span>
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md overflow-hidden">
+              <img 
+                src="/logos/main/forest-logo.png" 
+                alt="Forest Logo" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <span className="text-2xl font-bold text-primary-dark">Forest</span>
           </div>

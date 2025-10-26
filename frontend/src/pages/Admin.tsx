@@ -39,7 +39,14 @@ interface Web3Link {
 }
 
 // Sortable Link Component
-function SortableLink({ link, onDelete, isLoading }: { link: Web3Link; onDelete: (id: number) => void; isLoading: boolean }) {
+function SortableLink({ link, onDelete, onEdit, isLoading }: { 
+  link: Web3Link; 
+  onDelete: (id: number) => void; 
+  onEdit: (link: Web3Link) => void;
+  isLoading: boolean;
+}) {
+  const [showMenu, setShowMenu] = useState(false);
+
   const {
     attributes,
     listeners,
@@ -54,6 +61,27 @@ function SortableLink({ link, onDelete, isLoading }: { link: Web3Link; onDelete:
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
+
+  // Menü dışına tıklandığında menüyü kapat
+  useEffect(() => {
+    console.log('🔍 useEffect triggered, showMenu:', showMenu);
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      console.log('🔍 Click outside detected, target:', target);
+      if (showMenu && !target.closest('.menu-container')) {
+        console.log('🔍 Closing menu');
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('click', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [showMenu]);
 
   return (
     <div
@@ -71,7 +99,6 @@ function SortableLink({ link, onDelete, isLoading }: { link: Web3Link; onDelete:
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-semibold text-gray-900">{link.title}</h3>
-              <button className="text-gray-400 hover:text-gray-600">✏️</button>
             </div>
             <p className="text-sm text-gray-500">{link.url}</p>
             {link.url === 'http://emirkc_' && (
@@ -100,17 +127,49 @@ function SortableLink({ link, onDelete, isLoading }: { link: Web3Link; onDelete:
           >
             {link.is_active && <span className="text-white text-xs">✓</span>}
           </button>
-          <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(link.id);
-            }}
-            disabled={isLoading}
-            className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Delete link"
-          >
-            {isLoading ? '⏳' : '🗑️'}
-          </button>
+          
+          {/* Three Dots Menu */}
+          <div className="relative menu-container">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log('🔍 Three dots clicked, current showMenu:', showMenu);
+                setShowMenu(!showMenu);
+                console.log('🔍 Setting showMenu to:', !showMenu);
+              }}
+              className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded hover:bg-gray-100"
+              title="More options"
+            >
+              ⋯
+            </button>
+            
+            {/* Dropdown Menu */}
+            {showMenu && (
+              <div className="absolute right-0 top-full mt-1 w-32 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(link);
+                    setShowMenu(false);
+                  }}
+                  className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                >
+                  ✏️ Edit
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(link.id);
+                    setShowMenu(false);
+                  }}
+                  disabled={isLoading}
+                  className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? '⏳' : '🗑️'} Delete
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -124,6 +183,8 @@ export function Admin() {
   
   const [links, setLinks] = useState<Web3Link[]>([]);
   const [isAddLinkModalOpen, setIsAddLinkModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingLinkId, setEditingLinkId] = useState<number | null>(null);
   const [newLink, setNewLink] = useState({
     title: '',
     url: '',
@@ -279,11 +340,13 @@ export function Admin() {
     };
   }, [profileId, loadProfileData]);
 
-  // Link ekleme fonksiyonu - mock data ile
+  // Link ekleme/düzenleme fonksiyonu - mock data ile
   const handleAddLink = async () => {
     console.log('🔍 Admin: handleAddLink called');
     console.log('🔍 Admin: profileId:', profileId);
     console.log('🔍 Admin: newLink:', newLink);
+    console.log('🔍 Admin: isEditMode:', isEditMode);
+    console.log('🔍 Admin: editingLinkId:', editingLinkId);
     
     if (!newLink.title.trim() || !newLink.url.trim()) {
       console.log('❌ Admin: Title or URL is empty');
@@ -300,37 +363,62 @@ export function Admin() {
       setIsLoading(true);
       setError('');
 
-      console.log('🔍 Admin: Adding new link:', {
-        profileId,
-        title: newLink.title,
-        url: newLink.url,
-        icon: newLink.icon || '🔗',
-        banner: newLink.banner || ''
-      });
+      if (isEditMode && editingLinkId) {
+        // Edit mode - mevcut linki güncelle
+        console.log('🔍 Admin: Updating existing link:', {
+          profileId,
+          linkId: editingLinkId,
+          title: newLink.title,
+          url: newLink.url,
+          icon: newLink.icon || '🔗',
+          banner: newLink.banner || ''
+        });
 
-      const result = await forest.addLinkWithDappKit(
-        profileId,
-        newLink.title,
-        newLink.url,
-        newLink.icon || '🔗',
-        newLink.banner || '',
-        null // Mock Forest için signAndExecuteTransaction gerekli değil
-      );
+        const result = await forest.updateLinkWithDappKit(
+          profileId,
+          editingLinkId,
+          newLink.title,
+          newLink.url,
+          newLink.icon || '🔗',
+          newLink.banner || '',
+          null // Mock Forest için signAndExecuteTransaction gerekli değil
+        );
 
-      console.log('✅ Admin: Link added successfully:', result);
+        console.log('✅ Admin: Link updated successfully:', result);
+      } else {
+        // Add mode - yeni link ekle
+        console.log('🔍 Admin: Adding new link:', {
+          profileId,
+          title: newLink.title,
+          url: newLink.url,
+          icon: newLink.icon || '🔗',
+          banner: newLink.banner || ''
+        });
 
-      if (result.linkId !== undefined) {
-        // UI'yi manuel olarak güncelle
-        setNewLink({ title: '', url: '', icon: '', banner: '', type: 'custom', blockchain: '', contractAddress: '', tokenId: '', platform: '' });
-        setIsAddLinkModalOpen(false);
-        
-        // Profil verilerini yeniden yükle
-        loadProfileData();
-        console.log('✅ Admin: Link added, UI updated');
+        const result = await forest.addLinkWithDappKit(
+          profileId,
+          newLink.title,
+          newLink.url,
+          newLink.icon || '🔗',
+          newLink.banner || '',
+          null // Mock Forest için signAndExecuteTransaction gerekli değil
+        );
+
+        console.log('✅ Admin: Link added successfully:', result);
       }
+
+      // UI'yi temizle ve güncelle
+      setNewLink({ title: '', url: '', icon: '', banner: '', type: 'custom', blockchain: '', contractAddress: '', tokenId: '', platform: '' });
+      setIsAddLinkModalOpen(false);
+      setIsEditMode(false);
+      setEditingLinkId(null);
+      
+      // Profil verilerini yeniden yükle
+      loadProfileData();
+      console.log('✅ Admin: Link operation completed, UI updated');
     } catch (err) {
-      console.error('❌ Admin: Link eklenirken hata:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Link eklenirken bir hata oluştu.';
+      console.error('❌ Admin: Link işlemi sırasında hata:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Link işlemi sırasında bir hata oluştu.';
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -392,6 +480,8 @@ export function Admin() {
 
   const handleCloseModal = () => {
     setIsAddLinkModalOpen(false);
+    setIsEditMode(false);
+    setEditingLinkId(null);
     setNewLink({ 
       title: '', 
       url: '', 
@@ -433,7 +523,32 @@ export function Admin() {
     }
   };
 
-  // Link silme fonksiyonu - mock data ile
+  // Link düzenleme fonksiyonu
+  const handleEditLink = (link: Web3Link) => {
+    console.log('🔍 Admin: Editing link:', link);
+    
+    // Edit mode'u aktif et
+    setIsEditMode(true);
+    setEditingLinkId(link.id);
+    
+    // Mevcut link bilgilerini form'a yükle
+    setNewLink({
+      title: link.title,
+      url: link.url,
+      icon: link.icon,
+      banner: link.banner,
+      type: 'custom',
+      blockchain: '',
+      contractAddress: '',
+      tokenId: '',
+      platform: ''
+    });
+    
+    // Modal'ı aç
+    setIsAddLinkModalOpen(true);
+    
+    console.log('✅ Admin: Edit modal opened with link data');
+  };
   const handleDeleteLink = async (linkId: number) => {
     if (!profileId) {
       setError('Profil ID bulunamadı.');
@@ -478,20 +593,18 @@ export function Admin() {
     <div className="min-h-screen bg-amber-50">
 
       <div className="flex">
-        {/* Left Sidebar - Minecraft Style */}
-        <div className="w-64 bg-gradient-to-b from-amber-800 via-amber-700 to-amber-900 border-r border-amber-600 flex flex-col min-h-screen relative overflow-hidden">
-          {/* Minecraft Texture Overlay */}
-          <div className="absolute inset-0 opacity-20">
-            <div className="w-full h-full" style={{
-              backgroundImage: `
-                radial-gradient(circle at 20% 20%, rgba(139, 69, 19, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(160, 82, 45, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 40% 60%, rgba(101, 67, 33, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 60% 40%, rgba(120, 75, 37, 0.3) 0%, transparent 50%)
-              `,
-              backgroundSize: '20px 20px, 15px 15px, 25px 25px, 18px 18px'
-            }}></div>
-          </div>
+        {/* Left Sidebar - Brown Diagonal Pattern */}
+        <div className="w-64 border-r border-amber-600 flex flex-col min-h-screen relative overflow-hidden" style={{
+          background: `
+            linear-gradient(45deg, #8C6446 25%, transparent 25%),
+            linear-gradient(-45deg, #8C6446 25%, transparent 25%),
+            linear-gradient(45deg, transparent 75%, #6E5037 75%),
+            linear-gradient(-45deg, transparent 75%, #6E5037 75%)
+          `,
+          backgroundSize: '20px 20px',
+          backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
+          backgroundColor: '#8C6446'
+        }}>
           {/* User Profile Section */}
           <div className="p-4 border-b border-amber-600 relative z-10">
             <div className="flex items-center gap-3 mb-4">
@@ -558,20 +671,9 @@ export function Admin() {
           <div className="bg-amber-50 border-b border-gray-300 px-6 py-4">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Links</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Links Management</h1>
               </div>
               <div className="flex items-center gap-3">
-                <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
-                  <span>✨</span>
-                  <span className="text-sm font-medium">Enhance</span>
-                </button>
-                <button 
-                  onClick={toggleDebugPanel}
-                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-                >
-                  <span>🐛</span>
-                  <span className="text-sm font-medium">Debug</span>
-                </button>
                 <button className="text-gray-600 hover:text-gray-900">⚙️</button>
               </div>
             </div>
@@ -677,10 +779,6 @@ export function Admin() {
                   <p className="text-gray-600">
                     {profile.bio || 'Add bio'}
                   </p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-lg">📷</span>
-                    <span className="text-lg">+</span>
-                  </div>
                 </div>
               </div>
               
@@ -691,7 +789,7 @@ export function Admin() {
                     setIsAddLinkModalOpen(true);
                   }}
                   disabled={isLoading}
-                  className="group relative bg-gradient-to-r from-green-600 via-green-500 to-emerald-600 hover:from-green-500 hover:via-green-400 hover:to-emerald-500 text-white px-10 py-5 rounded-2xl font-bold text-xl shadow-2xl transition-all duration-500 hover:shadow-green-500/50 hover:shadow-2xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+                  className="group relative bg-gradient-to-r from-green-600 via-green-500 to-emerald-600 hover:from-green-500 hover:via-green-400 hover:to-emerald-500 text-white px-16 py-3 rounded-2xl font-bold text-xl shadow-2xl transition-all duration-500 hover:shadow-green-500/50 hover:shadow-2xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
                 >
                   {/* Luxury Glow Effect */}
                   <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 via-transparent to-yellow-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -701,7 +799,6 @@ export function Admin() {
                   
                   {/* Button Content */}
                   <div className="relative z-10 flex items-center justify-center gap-3">
-                    <span className="text-2xl group-hover:rotate-90 transition-transform duration-300">+</span>
                     <span>{isLoading ? 'Yükleniyor...' : 'Add'}</span>
                   </div>
                   
@@ -739,6 +836,7 @@ export function Admin() {
                         key={link.id}
                         link={link}
                         onDelete={handleDeleteLink}
+                        onEdit={handleEditLink}
                         isLoading={isLoading}
                       />
                     ))}
@@ -833,9 +931,6 @@ export function Admin() {
                         )}
                       </div>
                       <h2 className="text-xl font-bold text-white mb-2">@{profile.displayName}</h2>
-                      <div className="flex items-center justify-center gap-3">
-                        <span className="text-white text-lg">📷</span>
-                      </div>
                     </div>
 
                     {/* Premium Links Section */}
@@ -899,7 +994,7 @@ export function Admin() {
       <Modal
         isOpen={isAddLinkModalOpen}
         onClose={handleCloseModal}
-        title="Add New Link"
+        title={isEditMode ? "Edit Link" : "Add New Link"}
         size="large"
       >
         <div className="space-y-4">
@@ -952,7 +1047,7 @@ export function Admin() {
               disabled={isLoading}
               className="bg-green-600 hover:bg-green-700 text-white shadow-sm transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'İşleniyor...' : 'Add Link'}
+              {isLoading ? 'İşleniyor...' : (isEditMode ? 'Update Link' : 'Add Link')}
             </Button>
             <Button onClick={handleCloseModal} variant="outline">
               Cancel

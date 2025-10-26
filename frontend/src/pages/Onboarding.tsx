@@ -7,6 +7,20 @@ import { Input } from '../components/common/Input';
 import { Textarea } from '../components/common/Textarea';
 import { Background } from '../components/common/Background';
 import { forest } from '../forest';
+import { 
+  FaXTwitter, 
+  FaTelegram, 
+  FaYoutube, 
+  FaInstagram, 
+  FaGlobe, 
+  FaSpotify, 
+  FaWhatsapp, 
+  FaFacebook, 
+  FaTiktok, 
+  FaPinterest, 
+  FaThreads, 
+  FaSnapchat 
+} from 'react-icons/fa6';
 // Platform listesi bu dosyada tanımlı
 // Icon'lar artık emoji string olarak kullanılıyor
 
@@ -15,7 +29,7 @@ type Goal = 'creator' | 'business' | 'personal' | null;
 interface Platform {
   id: string;
   name: string;
-  icon: string;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
   placeholder: string;
   urlPrefix?: string;
@@ -23,21 +37,21 @@ interface Platform {
 
 const PLATFORMS: Platform[] = [
   // Row 1
-  { id: 'twitter', name: 'X', icon: '𝕏', color: '#000000', placeholder: '@username', urlPrefix: 'https://x.com/' },
-  { id: 'telegram', name: 'Telegram', icon: '📱', color: '#0088CC', placeholder: '@username', urlPrefix: 'https://t.me/' },
-  { id: 'youtube', name: 'YouTube', icon: '📺', color: '#FF0000', placeholder: 'Channel URL', urlPrefix: '' },
+  { id: 'twitter', name: 'X', icon: FaXTwitter, color: '#000000', placeholder: '@username', urlPrefix: 'https://x.com/' },
+  { id: 'telegram', name: 'Telegram', icon: FaTelegram, color: '#0088CC', placeholder: '@username', urlPrefix: 'https://t.me/' },
+  { id: 'youtube', name: 'YouTube', icon: FaYoutube, color: '#FF0000', placeholder: 'Channel URL', urlPrefix: '' },
   // Row 2
-  { id: 'instagram', name: 'Instagram', icon: '📷', color: '#E4405F', placeholder: '@username', urlPrefix: 'https://instagram.com/' },
-  { id: 'website', name: 'Personal Website', icon: '🌐', color: '#4A7C25', placeholder: 'URL', urlPrefix: '' },
-  { id: 'spotify', name: 'Spotify', icon: '🎵', color: '#1DB954', placeholder: 'Artist URL', urlPrefix: '' },
+  { id: 'instagram', name: 'Instagram', icon: FaInstagram, color: '#E4405F', placeholder: '@username', urlPrefix: 'https://instagram.com/' },
+  { id: 'website', name: 'Personal Website', icon: FaGlobe, color: '#4A7C25', placeholder: 'URL', urlPrefix: '' },
+  { id: 'spotify', name: 'Spotify', icon: FaSpotify, color: '#1DB954', placeholder: 'Artist URL', urlPrefix: '' },
   // Row 3
-  { id: 'whatsapp', name: 'WhatsApp', icon: '💬', color: '#25D366', placeholder: 'Phone number', urlPrefix: 'https://wa.me/' },
-  { id: 'facebook', name: 'Facebook', icon: '👥', color: '#1877F2', placeholder: 'Profile URL', urlPrefix: '' },
-  { id: 'tiktok', name: 'TikTok', icon: '🎭', color: '#000000', placeholder: '@username', urlPrefix: 'https://tiktok.com/@' },
+  { id: 'whatsapp', name: 'WhatsApp', icon: FaWhatsapp, color: '#25D366', placeholder: 'Phone number', urlPrefix: 'https://wa.me/' },
+  { id: 'facebook', name: 'Facebook', icon: FaFacebook, color: '#1877F2', placeholder: 'Profile URL', urlPrefix: '' },
+  { id: 'tiktok', name: 'TikTok', icon: FaTiktok, color: '#000000', placeholder: '@username', urlPrefix: 'https://tiktok.com/@' },
   // Row 4
-  { id: 'pinterest', name: 'Pinterest', icon: '📌', color: '#E60023', placeholder: 'Profile URL', urlPrefix: '' },
-  { id: 'threads', name: 'Threads', icon: '🧵', color: '#000000', placeholder: '@username', urlPrefix: 'https://threads.net/@' },
-  { id: 'snapchat', name: 'Snapchat', icon: '👻', color: '#FFFC00', placeholder: '@username', urlPrefix: '' },
+  { id: 'pinterest', name: 'Pinterest', icon: FaPinterest, color: '#E60023', placeholder: 'Profile URL', urlPrefix: '' },
+  { id: 'threads', name: 'Threads', icon: FaThreads, color: '#000000', placeholder: '@username', urlPrefix: 'https://threads.net/@' },
+  { id: 'snapchat', name: 'Snapchat', icon: FaSnapchat, color: '#FFFC00', placeholder: '@username', urlPrefix: '' },
 ];
 
 export function Onboarding() {
@@ -180,7 +194,7 @@ export function Onboarding() {
                 result.profileId,
                 platform.name,
                 platformLink,
-                platform.icon,
+                platform.name.toLowerCase(), // Icon olarak platform adını kullan
                 '', // banner boş
                 null // Mock Forest için signAndExecuteTransaction gerekli değil
               );
@@ -404,7 +418,13 @@ export function Onboarding() {
         {currentStep === 2 && (
           <div className="text-center pt-12 animate-fade-in">
             {/* Forest Icon */}
-            <div className="text-7xl mb-6 animate-bounce-slow">🌲</div>
+            <div className="flex justify-center mb-6 animate-bounce-slow">
+              <img 
+                src="/logos/main/forest-logo.png" 
+                alt="Forest Logo" 
+                className="w-20 h-20 object-contain"
+              />
+            </div>
             
             <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-2xl" style={{ textShadow: '0 4px 12px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.7)' }}>
               Which best describes your goal for using Forest?
@@ -529,7 +549,7 @@ export function Onboarding() {
                           className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 shadow-xl ring-2 ring-white"
                           style={{ backgroundColor: platform.color }}
                         >
-                          <span className="text-white text-2xl">{platform.icon}</span>
+                          <platform.icon className="text-white text-2xl" />
                         </div>
                         <Input
                           placeholder={platform.placeholder}
@@ -615,9 +635,9 @@ function GoalCard({ icon, title, description, selected, onClick }: {
   );
 }
 
-function PlatformCard({ name, icon, color, selected, disabled, onClick }: {
+function PlatformCard({ name, icon: IconComponent, color, selected, disabled, onClick }: {
   name: string;
-  icon: string;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
   selected: boolean;
   disabled?: boolean;
@@ -643,7 +663,7 @@ function PlatformCard({ name, icon, color, selected, disabled, onClick }: {
           }`}
           style={{ backgroundColor: disabled ? '#9CA3AF' : color }}
         >
-          <span className="text-white text-2xl md:text-3xl">{icon}</span>
+          <IconComponent className="text-white text-2xl md:text-3xl" />
         </div>
         <p className={`text-xs md:text-sm font-semibold ${
           selected ? 'text-gray-900' : 'text-white drop-shadow-lg'

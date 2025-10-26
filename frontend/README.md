@@ -1,14 +1,14 @@
 # Forest Frontend
 
-React + TypeScript + Vite tabanlı Forest frontend uygulaması.
+React + TypeScript + Vite based Forest frontend application.
 
-## Komutlar
+## Commands
 
 ```bash
-# Bağımlılıkları yükle
+# Install dependencies
 npm install
 
-# Development server'ı başlat
+# Start development server
 npm run dev
 
 # Production build
@@ -18,31 +18,31 @@ npm run build
 npm run preview
 ```
 
-## Önemli Dosyalar
+## Important Files
 
-- `src/App.tsx` - Ana uygulama component'i ve routing
+- `src/App.tsx` - Main application component and routing
 - `src/main.tsx` - Entry point
-- `src/contexts/AuthContext.tsx` - Wallet authentication state yönetimi
-- `src/hooks/useProfile.ts` - Profil veri yönetimi hook'u
-- `src/hooks/useLocalStorage.ts` - LocalStorage yönetimi
+- `src/contexts/AuthContext.tsx` - Wallet authentication state management
+- `src/hooks/useProfile.ts` - Profile data management hook
+- `src/hooks/useLocalStorage.ts` - LocalStorage management
 
-## Component Yapısı
+## Component Structure
 
 ### Pages
-- `Landing.tsx` - Ana sayfa
-- `Onboarding.tsx` - Profil oluşturma
-- `Dashboard.tsx` - Link yönetim paneli
-- `Profile.tsx` - Public profil görünümü
+- `Landing.tsx` - Home page
+- `Onboarding.tsx` - Profile creation
+- `Dashboard.tsx` - Link management panel
+- `Profile.tsx` - Public profile view
 
 ### Components
-- `components/common/` - Ortak component'ler (Button, Input, Modal, vb.)
-- `components/auth/` - Authentication component'leri
+- `components/common/` - Common components (Button, Input, Modal, etc.)
+- `components/auth/` - Authentication components
 
-## Veri Yönetimi
+## Data Management
 
-Şu an veriler LocalStorage'da saklanıyor. Key: `forest_profiles`
+Currently data is stored in LocalStorage. Key: `forest_profiles`
 
-Yapı:
+Structure:
 ```typescript
 {
   [walletAddress]: {
@@ -58,9 +58,9 @@ Yapı:
 
 ## Sui Integration
 
-- `@mysten/dapp-kit` - Wallet bağlantısı ve UI component'leri
+- `@mysten/dapp-kit` - Wallet connection and UI components
 - `@mysten/sui` - Sui blockchain SDK
-- Network: Testnet (şimdilik)
+- Network: Testnet (for now)
 
 
 

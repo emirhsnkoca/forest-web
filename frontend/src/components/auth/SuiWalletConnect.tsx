@@ -32,8 +32,8 @@ export function SuiWalletConnect() {
   return (
     <div className="flex items-center gap-3">
       <ConnectButton 
-        connectText="Sui Cüzdanı Bağla"
-        className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg font-medium transition-colors"
+        connectText="Connect Wallet"
+        className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-lg hover:shadow-green-500/50"
       />
     </div>
   );

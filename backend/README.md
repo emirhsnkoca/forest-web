@@ -1,48 +1,48 @@
 # Forest Linktree - Smart Contract
 
-Basit ve güçlü on-chain Linktree uygulaması. Kullanıcılar profil oluşturup, link ekleyebilir ve yönetebilir.
+Simple and powerful on-chain Linktree application. Users can create profiles, add and manage links.
 
-## 📦 Deployment Bilgileri (Testnet)
+## 📦 Deployment Information (Testnet)
 
 - **Package ID**: `0xd7dc024c79b49d74de64f6cec621d46488934b19f2200c857a24835878e6e5f7`
 - **Module**: `forest::linktree`
 - **Network**: Sui Testnet
 - **Explorer**: [SuiScan](https://suiscan.xyz/testnet/object/0xd7dc024c79b49d74de64f6cec621d46488934b19f2200c857a24835878e6e5f7)
 
-## 🏗️ Yapı
+## 🏗️ Structure
 
-### Profile Objesi
+### Profile Object
 ```rust
 struct Profile {
     id: UID,
     owner: address,
     display_name: String,    // "John Doe"
-    bio: String,            // Kısa açıklama
+    bio: String,            // Short description
     avatar_url: String,     // Avatar URL/CID
-    theme: String,          // Tema rengi
-    links: Table<u64, Link>, // Linkler
+    theme: String,          // Theme color
+    links: Table<u64, Link>, // Links
     next_link_id: u64,
     link_count: u64,
     created_at: u64,
 }
 ```
 
-### Link Objesi
+### Link Object
 ```rust
 struct Link {
     id: u64,
     title: String,          // "My Website"
     url: String,            // "https://..."
-    position: u64,          // Sıralama
-    visible: bool,          // Görünürlük
+    position: u64,          // Ordering
+    visible: bool,          // Visibility
 }
 ```
 
-## 🎯 Fonksiyonlar
+## 🎯 Functions
 
-### 1. Profile İşlemleri
+### 1. Profile Operations
 ```move
-// Yeni profil oluştur
+// Create new profile
 public entry fun create_profile(
     display_name: String,
     bio: String,
@@ -51,7 +51,7 @@ public entry fun create_profile(
     ctx: &mut TxContext
 )
 
-// Profil güncelle
+// Update profile
 public entry fun update_profile(
     profile: &mut Profile,
     display_name: String,
@@ -62,9 +62,9 @@ public entry fun update_profile(
 )
 ```
 
-### 2. Link İşlemleri
+### 2. Link Operations
 ```move
-// Link ekle
+// Add link
 public entry fun add_link(
     profile: &mut Profile,
     title: String,
@@ -73,7 +73,7 @@ public entry fun add_link(
     ctx: &mut TxContext
 )
 
-// Link güncelle
+// Update link
 public entry fun update_link(
     profile: &mut Profile,
     link_id: u64,
@@ -84,14 +84,14 @@ public entry fun update_link(
     ctx: &mut TxContext
 )
 
-// Link sil
+// Delete link
 public entry fun delete_link(
     profile: &mut Profile,
     link_id: u64,
     ctx: &mut TxContext
 )
 
-// Link görünürlüğünü değiştir
+// Toggle link visibility
 public entry fun toggle_link_visibility(
     profile: &mut Profile,
     link_id: u64,
@@ -100,7 +100,7 @@ public entry fun toggle_link_visibility(
 )
 ```
 
-### 3. Getter Fonksiyonlar
+### 3. Getter Functions
 ```move
 public fun get_owner(profile: &Profile): address
 public fun get_display_name(profile: &Profile): String
@@ -114,14 +114,14 @@ public fun get_created_at(profile: &Profile): u64
 ## 📊 Events
 
 ```move
-// Profil oluşturuldu
+// Profile created
 public struct ProfileCreated has copy, drop {
     profile_id: address,
     owner: address,
     display_name: String,
 }
 
-// Link eklendi
+// Link added
 public struct LinkAdded has copy, drop {
     profile_id: address,
     link_id: u64,
@@ -129,29 +129,29 @@ public struct LinkAdded has copy, drop {
     url: String,
 }
 
-// Link güncellendi
+// Link updated
 public struct LinkUpdated has copy, drop {
     profile_id: address,
     link_id: u64,
 }
 
-// Link silindi
+// Link deleted
 public struct LinkDeleted has copy, drop {
     profile_id: address,
     link_id: u64,
 }
 ```
 
-## 🔒 Güvenlik
+## 🔒 Security
 
-- ✅ **Owner Kontrolü**: Sadece profil sahibi işlem yapabilir
-- ✅ **Link Limiti**: Maksimum 100 link
-- ✅ **Validasyon**: Link ID kontrolü
-- ✅ **On-Chain**: Tüm veriler blockchain'de
+- ✅ **Owner Control**: Only profile owner can perform operations
+- ✅ **Link Limit**: Maximum 100 links
+- ✅ **Validation**: Link ID validation
+- ✅ **On-Chain**: All data stored on blockchain
 
-## 🚀 Kullanım
+## 🚀 Usage
 
-### CLI ile Profil Oluşturma
+### Create Profile via CLI
 ```bash
 sui client call \
   --package 0xd7dc024c79b49d74de64f6cec621d46488934b19f2200c857a24835878e6e5f7 \
@@ -161,7 +161,7 @@ sui client call \
   --gas-budget 10000000
 ```
 
-### CLI ile Link Ekleme
+### Add Link via CLI
 ```bash
 sui client call \
   --package 0xd7dc024c79b49d74de64f6cec621d46488934b19f2200c857a24835878e6e5f7 \
@@ -184,37 +184,37 @@ sui move build
 sui move test
 ```
 
-### Publish (İlk defa)
+### Publish (First time)
 ```bash
-# Move.toml'da forest = "0x0" olmalı
+# Move.toml should have forest = "0x0"
 sui client publish --gas-budget 100000000
 ```
 
 ### Upgrade
 ```bash
-# Move.toml'da forest = "<PACKAGE_ID>" olmalı
+# Move.toml should have forest = "<PACKAGE_ID>"
 sui client upgrade --upgrade-cap <UPGRADE_CAP_ID> --gas-budget 100000000
 ```
 
-## 📁 Dosya Yapısı
+## 📁 File Structure
 
 ```
 smart-contracts/
 ├── sources/
-│   └── forest.move          # Ana kontrat
+│   └── forest.move          # Main contract
 ├── tests/
-│   └── linktree_tests.move  # Unit testler (TODO)
-├── Move.toml                # Paket konfigürasyonu
-├── deployment.json          # Deployment bilgileri
-└── README.md                # Bu dosya
+│   └── linktree_tests.move  # Unit tests (TODO)
+├── Move.toml                # Package configuration
+├── deployment.json          # Deployment information
+└── README.md                # This file
 ```
 
-## 🎨 Frontend Entegrasyonu
+## 🎨 Frontend Integration
 
 ```typescript
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 
-// Profil oluştur
+// Create profile
 const tx = new TransactionBlock();
 tx.moveCall({
   target: `${PACKAGE_ID}::linktree::create_profile`,
@@ -230,21 +230,21 @@ await signAndExecuteTransactionBlock({ transactionBlock: tx });
 
 ## 🗺️ Roadmap
 
-- [x] Temel profil ve link yönetimi
-- [ ] Dynamic fields ile handle sistemi
-- [ ] NFT ve bakiye görüntüleme
-- [ ] Donation özelliği
-- [ ] Analytics ve tıklama istatistikleri
-- [ ] Walrus entegrasyonu
-- [ ] SuiNS domain desteği
+- [x] Basic profile and link management
+- [ ] Dynamic fields with handle system
+- [ ] NFT and balance display
+- [ ] Donation feature
+- [ ] Analytics and click statistics
+- [ ] Walrus integration
+- [ ] SuiNS domain support
 
-## 📄 Lisans
+## 📄 License
 
 MIT License
 
-## 🤝 Katkıda Bulunma
+## 🤝 Contributing
 
-PR'lar kabul edilir! Lütfen büyük değişiklikler için önce issue açın.
+PRs are welcome! Please open an issue for major changes.
 
 ---
 
