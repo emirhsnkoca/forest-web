@@ -515,9 +515,6 @@ export function Admin() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button className="text-gray-600 hover:text-gray-900">
-              ⚙️
-            </button>
             <div className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-lg">
               <span className="text-sm text-gray-600">forest.ee/{profileSettings.displayName}</span>
               <button className="text-gray-600 hover:text-gray-900">📤</button>
